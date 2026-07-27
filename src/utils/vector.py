@@ -46,3 +46,39 @@ class Vector2:
         """
 
         return Vector2(self.x, self.y)
+
+    # ====================
+    # Operators
+    # ====================
+
+    def __add__(self, other: "Vector2") -> "Vector2":
+
+        return Vector2(
+            self.x + other.x,
+            self.y + other.y
+        )
+
+    def __sub__(self, other: "Vector2") -> "Vector2":
+
+        return Vector2(
+            self.x - other.x,
+            self.y - other.y
+        )
+
+    def __eq__(self, other: object) -> bool:
+
+        if not isinstance(other, Vector2):
+            return False
+
+        return (
+            self.x == other.x and
+            self.y == other.y
+        )
+
+    # ====================
+    # String
+    # ====================
+
+    def __repr__(self) -> str:
+
+        return f"Vector2({self.x}, {self.y})"
