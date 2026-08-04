@@ -11,9 +11,7 @@ Purpose:
 
 from settings import Settings
 from typing import Literal
-
-
-MS_PER_FRAME = 1000.0 / 60.0
+from constants import MS_PER_FRAME
 
 
 class InputHandler:
@@ -80,9 +78,15 @@ class InputHandler:
 
 
 
-        self.das_timer = 0.0
+        self.das_timer = {
+            "move_left": 0.0,
+            "move_right": 0.0
+        }
 
-        self.arr_timer = 0.0
+        self.arr_timer = {
+            "move_left": 0.0,
+            "move_right": 0.0
+        }
 
         self.dcd_timer = 0.0
 
@@ -160,8 +164,23 @@ class InputHandler:
         Resets DAS after lock, rotation or hold.
         """
 
-        self.das_timer = 0.0
-        self.arr_timer = 0.0
+        for direction in self.das_timer:
+
+            self.das_timer[direction] = 0.0
+            self.arr_timer[direction] = 0.0
+
+
+
+    def cancel_das(self) -> None:
+        """
+        Cancels DAS when changing direction.
+        """
+
+        if self.direction is None:
+            return
+
+        self.das_timer[self.direction] = 0.0
+        self.arr_timer[self.direction] = 0.0
 
 
 
@@ -253,8 +272,8 @@ class InputHandler:
             self.direction = direction
 
 
-            self.das_timer = 0.0
-            self.arr_timer = 0.0
+            if self.settings.handling.cancel_das:
+                self.cancel_das()
 
 
             if direction:
@@ -292,7 +311,7 @@ class InputHandler:
         )
 
 
-        self.das_timer += delta_ms
+        self.das_timer[direction] += delta_ms
 
 
 
@@ -300,7 +319,7 @@ class InputHandler:
         # DAS
         # ====================
 
-        if self.das_timer < self.das:
+        if self.das_timer[direction] < self.das:
 
             return
 
@@ -321,7 +340,7 @@ class InputHandler:
                 )
 
 
-            self.arr_timer = 0.0
+            self.arr_timer[direction] = 0.0
 
 
             return
@@ -333,10 +352,10 @@ class InputHandler:
         # Normal ARR
         # ====================
 
-        self.arr_timer += delta_ms
+        self.arr_timer[direction] += delta_ms
 
 
-        while self.arr_timer >= self.arr:
+        while self.arr_timer[direction] >= self.arr:
 
             if self.direction is not None:
             
@@ -346,4 +365,4 @@ class InputHandler:
                 )
 
 
-            self.arr_timer -= self.arr
+            self.arr_timer[direction] -= self.arr
