@@ -56,6 +56,7 @@ class Game:
         self.lock_resets = 0
 
         self.soft_drop_timer = 0.0
+        self.prevent_hard_drop_timer = 0.0
 
 
     # ====================
@@ -77,6 +78,7 @@ class Game:
         self.lock_timer = 0.0
         self.lock_resets = 0
         self.soft_drop_timer = 0.0
+        self.prevent_hard_drop_timer = 0.0
 
 
     def restart(self) -> None:
@@ -118,6 +120,15 @@ class Game:
             return
 
 
+        if self.prevent_hard_drop_timer > 0:
+
+            self.prevent_hard_drop_timer -= delta_time
+
+            if self.prevent_hard_drop_timer < 0:
+
+                self.prevent_hard_drop_timer = 0.0
+
+
         self.handle_input(
             delta_time,
             events
@@ -139,6 +150,10 @@ class Game:
 
 
             if self.lock_timer >= LOCK_DELAY / FPS:
+
+                if self.settings.handling.prevent_hard_drop:
+
+                    self.prevent_hard_drop_timer = LOCK_DELAY / FPS
 
                 self.lock_piece()
 
@@ -166,6 +181,18 @@ class Game:
             delta_time
         )
 
+        if (
+            self.settings.handling.prefer_soft_drop
+            and "soft_drop" in actions
+        ):
+            actions.remove(
+                "soft_drop"
+            )
+
+            actions.insert(
+                0,
+                "soft_drop"
+            )
 
         for action in actions:
 
@@ -232,7 +259,12 @@ class Game:
 
             if event == "hard_drop":
 
-                self.hard_drop()
+                if (
+                    not self.settings.handling.prevent_hard_drop
+                    or self.prevent_hard_drop_timer == 0.0
+                ):
+
+                    self.hard_drop()
 
 
             elif event == "rotate_cw":
@@ -241,7 +273,6 @@ class Game:
 
                 if rotated:
                     self.reset_lock_timer_if_grounded()
-                    self.input.reset_handling()
 
 
             elif event == "rotate_ccw":
@@ -250,7 +281,6 @@ class Game:
 
                 if rotated:
                     self.reset_lock_timer_if_grounded()
-                    self.input.reset_handling()
 
 
             elif event == "rotate_180":
@@ -259,14 +289,10 @@ class Game:
 
                 if rotated:
                     self.reset_lock_timer_if_grounded()
-                    self.input.reset_handling()
 
             elif event == "hold":
 
-                held = self.board.hold()
-
-                if held:
-                    self.input.reset_handling()
+                self.board.hold()
 
             elif event == "pause":
 
@@ -419,19 +445,15 @@ class Game:
     
         while self.soft_drop_timer >= interval:
     
-            if self.board.move_piece(
+            self.soft_drop_timer -= interval
+
+            if not self.board.move_piece(
                 0,
                 1
             ):
-    
-                moved = True
-    
-            else:
-    
                 break
-    
-    
-            self.soft_drop_timer -= interval
+
+            moved = True
     
     
     
@@ -481,6 +503,8 @@ class Game:
         
 
         self.input.reset_handling()
+
+        self.soft_drop_timer = 0.0
 
 
 
