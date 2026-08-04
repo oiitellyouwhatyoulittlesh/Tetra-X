@@ -145,6 +145,9 @@ class Handling:
     dcd: float
     sdf: float
 
+    prevent_hard_drop: bool
+    cancel_das: bool
+    prefer_soft_drop: bool
 
 @dataclass
 class Video:
@@ -206,5 +209,20 @@ class Settings:
             das=max(1.0, min(20.0, float(data["das"]))),
             arr=max(0.0, min(5.0, float(data["arr"]))),
             dcd=max(0.0, min(20.0, float(data["dcd"]))),
-            sdf=sdf
+            sdf=sdf,
+
+            prevent_hard_drop=data.get(
+                "prevent_hard_drop",
+                False
+            ),
+
+            cancel_das=data.get(
+                "cancel_das",
+                True
+            ),
+
+            prefer_soft_drop=data.get(
+                "prefer_soft_drop",
+                False
+            )
         )
