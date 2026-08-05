@@ -6,7 +6,6 @@ File:
 
 Purpose:
     Starts the game and runs the main loop.
-
 """
 
 import pygame
@@ -26,8 +25,11 @@ sys.path.insert(
 
 from constants import FPS
 
-from game.game import Game
 from graphics.renderer import Renderer
+from settings import Settings
+
+from screens.screen import ScreenManager
+from screens.main_menu import MainMenu
 
 
 
@@ -36,14 +38,25 @@ def main() -> None:
     Runs the game.
     """
 
-    game = Game()
+    settings = Settings()
 
     renderer = Renderer()
 
+    screen_manager = ScreenManager(
+        renderer,
+        settings
+    )
+
+
+    screen_manager.set_screen(
+        MainMenu(
+            screen_manager,
+            settings
+        )
+    )
+
+
     clock = pygame.time.Clock()
-
-
-    game.start()
 
 
     running = True
@@ -66,17 +79,19 @@ def main() -> None:
                 running = False
 
 
-        game.update(
-            delta_time,
+        screen_manager.handle_events(
             events
+        )
+
+
+        screen_manager.update(
+            delta_time
         )
 
 
         renderer.clear()
 
-        renderer.draw_board(
-            game.get_board()
-        )
+        screen_manager.draw()
 
         renderer.update()
 
