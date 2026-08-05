@@ -68,6 +68,17 @@ class Renderer:
         self.hud = HUD()
 
 
+        self.menu_title_font = pygame.font.Font(
+            None,
+            72
+        )
+
+        self.menu_option_font = pygame.font.Font(
+            None,
+            42
+        )
+
+
 
     # ====================
     # Drawing
@@ -81,7 +92,102 @@ class Renderer:
         self.screen.fill(
             BACKGROUND
         )
+    
 
+    def draw_screen(
+        self,
+        screen
+    ) -> None:
+        """
+        Draws a menu or other screen.
+        """
+
+        screen.draw(
+            self
+        )
+
+
+    def draw_menu(
+        self,
+        title: str,
+        options: list[str],
+        selected: int
+    ) -> None:
+        """
+        Draws a menu screen.
+        """
+
+        self.clear()
+
+
+        # ====================
+        # Title
+        # ====================
+
+        title_surface = self.menu_title_font.render(
+            title,
+            True,
+            (255, 255, 255)
+        )
+
+        title_rectangle = title_surface.get_rect(
+            center=(
+                self.screen_width // 2,
+                self.screen_height // 3
+            )
+        )
+
+        self.screen.blit(
+            title_surface,
+            title_rectangle
+        )
+
+
+        # ====================
+        # Options
+        # ====================
+
+        option_spacing = 70
+
+        start_y = (
+            self.screen_height // 2
+        )
+
+
+        for index, option in enumerate(options):
+
+            if index == selected:
+
+                text = (
+                    "> "
+                    + option
+                )
+
+            else:
+
+                text = option
+
+
+            option_surface = self.menu_option_font.render(
+                text,
+                True,
+                (255, 255, 255)
+            )
+
+
+            option_rectangle = option_surface.get_rect(
+                center=(
+                    self.screen_width // 2,
+                    start_y
+                    + index * option_spacing
+                )
+            )
+
+
+            self.screen.blit(
+                option_surface,
+                option_rectangle
+            )
 
 
     def draw_board(self, board) -> None:
