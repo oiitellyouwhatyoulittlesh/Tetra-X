@@ -2,31 +2,29 @@
     "video": {
         "fullscreen": true
     },
-
     "controls": {
-        "move_left": "LEFT",
-        "move_right": "RIGHT",
-        "soft_drop": "DOWN",
+        "move_left": "i",
+        "move_right": "p",
+        "soft_drop": "o",
         "hard_drop": "SPACE",
-
-        "rotate_cw": "UP",
-        "rotate_ccw": "z",
-        "rotate_180": "x",
-
-        "hold": "c",
-
-        "pause": "ESCAPE",
-        "restart": "r"
+        "rotate_cw": "r",
+        "rotate_ccw": "w",
+        "rotate_180": "e",
+        "hold": "'",
+        "pause": "h",
+        "restart": "g",
+        "menu_up": "UP",
+        "menu_down": "DOWN",
+        "menu_confirm": "RETURN",
+        "menu_back": "ESCAPE"
     },
-
     "handling": {
         "das": 10.0,
         "arr": 2.0,
         "dcd": 1.0,
-        "sdf": 6.0,
-
+        "sdf": "6",
         "prevent_hard_drop": false,
         "cancel_das": true,
-        "prefer_soft_drop": false
+        "prefer_soft_drop": true
     }
 }
