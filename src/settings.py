@@ -6,7 +6,6 @@ File:
 
 Purpose:
     Loads and stores the game's settings.
-
 """
 
 from dataclasses import dataclass
@@ -17,7 +16,11 @@ from constants import (
     DEFAULT_SETTINGS,
     SETTINGS_FILE
 )
-from save.json_manager import load_json
+
+from save.json_manager import (
+    load_json,
+    save_json
+)
 
 
 # ====================
@@ -120,6 +123,15 @@ KEY_MAP = {
 }
 
 
+# Reverse lookup:
+# pygame key -> settings.json name
+
+REVERSE_KEY_MAP = {
+    key: name
+    for name, key in KEY_MAP.items()
+}
+
+
 # ====================
 # Settings Classes
 # ====================
@@ -137,6 +149,11 @@ class Controls:
     pause: int
     restart: int
 
+    menu_up: int
+    menu_down: int
+    menu_confirm: int
+    menu_back: int
+
 
 @dataclass
 class Handling:
@@ -148,6 +165,7 @@ class Handling:
     prevent_hard_drop: bool
     cancel_das: bool
     prefer_soft_drop: bool
+
 
 @dataclass
 class Video:
@@ -166,18 +184,30 @@ class Settings:
             DEFAULT_SETTINGS
         )
 
-        self.controls = self._load_controls(data["controls"])
-        self.handling = self._load_handling(data["handling"])
+        self.controls = self._load_controls(
+            data["controls"]
+        )
+
+        self.handling = self._load_handling(
+            data["handling"]
+        )
 
         self.video = Video(
-            fullscreen=data["video"].get("fullscreen", True)
+            fullscreen=data["video"].get(
+                "fullscreen",
+                True
+            )
         )
+
 
     # ====================
     # Loading
     # ====================
 
-    def _load_controls(self, data: dict) -> Controls:
+    def _load_controls(
+        self,
+        data: dict
+    ) -> Controls:
         """
         Loads the control settings.
         """
@@ -192,10 +222,19 @@ class Settings:
             rotate_180=KEY_MAP[data["rotate_180"]],
             hold=KEY_MAP[data["hold"]],
             pause=KEY_MAP[data["pause"]],
-            restart=KEY_MAP[data["restart"]]
+            restart=KEY_MAP[data["restart"]],
+
+            menu_up=KEY_MAP[data["menu_up"]],
+            menu_down=KEY_MAP[data["menu_down"]],
+            menu_confirm=KEY_MAP[data["menu_confirm"]],
+            menu_back=KEY_MAP[data["menu_back"]]
         )
 
-    def _load_handling(self, data: dict) -> Handling:
+
+    def _load_handling(
+        self,
+        data: dict
+    ) -> Handling:
         """
         Loads the handling settings.
         """
@@ -203,12 +242,35 @@ class Settings:
         sdf = data["sdf"]
 
         if sdf == "inf":
+
             sdf = float("inf")
 
+
         return Handling(
-            das=max(1.0, min(20.0, float(data["das"]))),
-            arr=max(0.0, min(5.0, float(data["arr"]))),
-            dcd=max(0.0, min(20.0, float(data["dcd"]))),
+            das=max(
+                1.0,
+                min(
+                    20.0,
+                    float(data["das"])
+                )
+            ),
+
+            arr=max(
+                0.0,
+                min(
+                    5.0,
+                    float(data["arr"])
+                )
+            ),
+
+            dcd=max(
+                0.0,
+                min(
+                    20.0,
+                    float(data["dcd"])
+                )
+            ),
+
             sdf=sdf,
 
             prevent_hard_drop=data.get(
@@ -225,4 +287,187 @@ class Settings:
                 "prefer_soft_drop",
                 False
             )
+        )
+
+
+    # ====================
+    # Control Settings
+    # ====================
+
+    def get_control(
+        self,
+        action: str
+    ) -> int | None:
+        """
+        Returns the pygame key bound to an action.
+        """
+
+        return getattr(
+            self.controls,
+            action,
+            None
+        )
+
+
+    def get_control_name(
+        self,
+        action: str
+    ) -> str:
+        """
+        Returns the readable key name for an action.
+        """
+
+        key = self.get_control(
+            action
+        )
+
+        if key is None:
+            return "UNKNOWN"
+
+        if key in REVERSE_KEY_MAP:
+            return REVERSE_KEY_MAP[key]
+
+        return pygame.key.name(key).upper()
+
+
+    def set_control(
+        self,
+        action: str,
+        key: int
+    ) -> bool:
+        """
+        Changes the key bound to an action.
+
+        Returns True if the action exists.
+        """
+
+        if not hasattr(
+            self.controls,
+            action
+        ):
+            return False
+
+
+        setattr(
+            self.controls,
+            action,
+            key
+        )
+
+
+        return True
+
+
+    # ====================
+    # Reset
+    # ====================
+
+    def reset(self) -> None:
+        """
+        Restores all settings to their default values
+        and saves them to the settings file.
+        """
+
+        data = DEFAULT_SETTINGS
+
+
+        self.controls = self._load_controls(
+            data["controls"]
+        )
+
+        self.handling = self._load_handling(
+            data["handling"]
+        )
+
+        self.video = Video(
+            fullscreen=data["video"].get(
+                "fullscreen",
+                True
+            )
+        )
+
+        self.save()
+
+
+    # ====================
+    # Saving
+    # ====================
+
+    def save(self) -> None:
+        """
+        Saves the current settings to JSON.
+        """
+
+        controls = {}
+
+        for action in (
+            "move_left",
+            "move_right",
+            "soft_drop",
+            "hard_drop",
+            "rotate_cw",
+            "rotate_ccw",
+            "rotate_180",
+            "hold",
+            "pause",
+            "restart",
+            "menu_up",
+            "menu_down",
+            "menu_confirm",
+            "menu_back"
+        ):
+
+            key = self.get_control(
+                action
+            )
+
+            if key is None:
+                continue
+
+            if key in REVERSE_KEY_MAP:
+
+                controls[action] = REVERSE_KEY_MAP[key]
+
+            else:
+
+                controls[action] = pygame.key.name(key).upper()
+
+
+        handling = {
+            "das": self.handling.das,
+            "arr": self.handling.arr,
+            "dcd": self.handling.dcd,
+            "sdf": (
+                "inf"
+                if self.handling.sdf == float("inf")
+                else self.handling.sdf
+            ),
+
+            "prevent_hard_drop":
+                self.handling.prevent_hard_drop,
+
+            "cancel_das":
+                self.handling.cancel_das,
+
+            "prefer_soft_drop":
+                self.handling.prefer_soft_drop
+        }
+
+
+        video = {
+            "fullscreen":
+                self.video.fullscreen
+        }
+
+
+        data = {
+            "video": video,
+            "controls": controls,
+            "handling": handling
+        }
+
+
+        save_json(
+            SETTINGS_FILE,
+            data
         )
