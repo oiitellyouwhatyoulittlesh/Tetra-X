@@ -20,6 +20,7 @@ from input.controls import Controls
 from input.handling import InputHandler
 
 from settings import Settings
+from game.modes import GameMode
 
 class Game:
     """
@@ -33,13 +34,20 @@ class Game:
     GRAVITY_TIME = 1.0
 
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        mode: GameMode
+    ) -> None:
+
+        self.mode = mode
 
         self.settings = Settings()
 
         self.board = Board()
 
-        self.controls = Controls()
+        self.controls = Controls(
+            self.settings
+        )
 
         self.input = InputHandler(
             self.controls,
