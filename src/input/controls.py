@@ -11,30 +11,39 @@ Purpose:
 
 import pygame
 
+from settings import Settings
+
 
 class Controls:
     """
     Handles keyboard controls.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        settings: Settings
+    ) -> None:
 
-        self.bindings = {
-            "move_left": pygame.K_LEFT,
-            "move_right": pygame.K_RIGHT,
-            "soft_drop": pygame.K_DOWN,
+        self.settings = settings
 
-            "hard_drop": pygame.K_SPACE,
 
-            "rotate_cw": pygame.K_UP,
-            "rotate_ccw": pygame.K_z,
-            "rotate_180": pygame.K_x,
+    # ====================
+    # Binding
+    # ====================
 
-            "hold": pygame.K_c,
+    def get_binding(
+        self,
+        action: str
+    ) -> int | None:
+        """
+        Returns the key bound to an action.
+        """
 
-            "pause": pygame.K_ESCAPE,
-            "restart": pygame.K_r
-        }
+        return getattr(
+            self.settings.controls,
+            action,
+            None
+        )
 
 
     # ====================
@@ -62,11 +71,15 @@ class Controls:
         Returns True if an action key is held.
         """
 
-        if action not in self.bindings:
+        key = self.get_binding(
+            action
+        )
+
+        if key is None:
             return False
 
         return self.pressed(
-            self.bindings[action]
+            key
         )
 
 
@@ -84,44 +97,39 @@ class Controls:
 
         actions = []
 
+
         for event in events:
 
             if event.type != pygame.KEYDOWN:
                 continue
 
 
-            for action, key in self.bindings.items():
+            for action in (
+                "move_left",
+                "move_right",
+                "soft_drop",
+                "hard_drop",
+                "rotate_cw",
+                "rotate_ccw",
+                "rotate_180",
+                "hold",
+                "pause",
+                "restart",
+                "menu_up",
+                "menu_down",
+                "menu_confirm",
+                "menu_back"
+            ):
+
+                key = self.get_binding(
+                    action
+                )
 
                 if event.key == key:
 
-                    actions.append(action)
+                    actions.append(
+                        action
+                    )
 
 
         return actions
-
-
-    # ====================
-    # Information
-    # ====================
-
-    def set_binding(
-        self,
-        action: str,
-        key: int
-    ) -> None:
-        """
-        Changes an action key.
-        """
-
-        self.bindings[action] = key
-
-
-    def get_binding(
-        self,
-        action: str
-    ) -> int | None:
-        """
-        Returns the key for an action.
-        """
-
-        return self.bindings.get(action)
