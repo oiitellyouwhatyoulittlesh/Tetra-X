@@ -9,6 +9,7 @@ Purpose:
 """
 
 from screens.screen import Screen
+from screens.pause_menu import PauseMenu
 
 from game.game import Game
 from game.modes import GameMode
@@ -64,10 +65,28 @@ class GameScreen(Screen):
         Updates the game.
         """
 
+        was_paused = self.game.paused
+
         self.game.update(
             delta_time,
             self.events
         )
+
+        # Clear events so they don't leak into subsequent frames
+        self.events = []
+
+        if (
+            not was_paused
+            and self.game.paused
+        ):
+
+            self.screen_manager.set_screen(
+                PauseMenu(
+                    self.screen_manager,
+                    self,
+                    self.game.settings
+                )
+            )
 
 
     # ====================
@@ -85,5 +104,5 @@ class GameScreen(Screen):
         renderer.clear()
 
         renderer.draw_board(
-            self.game.get_board()
+            self.game
         )
