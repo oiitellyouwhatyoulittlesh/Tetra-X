@@ -79,7 +79,6 @@ class Renderer:
         )
 
 
-
     # ====================
     # Drawing
     # ====================
@@ -190,126 +189,211 @@ class Renderer:
             )
 
 
-    def draw_board(self, board) -> None:
+    def draw_board(self, game) -> None:
         """
         Draws the board and pieces.
         """
-    
-    
-        # Backend:
-        # 0-39
-        #
-        # Visible:
-        # 20-39
-        #
-        # Screen:
-        # 0-19
-    
-    
+
+        board = game.get_board()
+
         OFFSET = (
             len(board.grid)
             - VISIBLE_ROWS
         )
-    
-    
+
+
         # ====================
         # Visible Grid + Locked Blocks
         # ====================
-    
+
         for screen_y in range(
             VISIBLE_ROWS
         ):
-    
+
             board_y = (
                 screen_y
                 + OFFSET
             )
-    
-    
+
+
             for x in range(
                 BOARD_COLUMNS
             ):
-    
+
                 self.draw_cell(
                     x,
                     screen_y,
                     board.grid[board_y][x]
                 )
-    
-    
-    
+
+
         # ====================
         # Hidden Locked Blocks
         # ====================
-    
+
         for board_y in range(
             OFFSET
         ):
-    
+
             for x in range(
                 BOARD_COLUMNS
             ):
-    
+
                 cell = board.grid[board_y][x]
-    
+
                 if cell:
-    
+
                     screen_y = (
                         board_y
                         - OFFSET
                     )
-    
+
                     self.draw_cell(
                         x,
                         screen_y,
                         cell
                     )
-    
-    
-    
+
+
         # ====================
         # Ghost Piece
         # ====================
-    
+
         ghost = board.get_ghost_piece()
-    
+
         if ghost:
-    
+
             ghost_colour = tuple(
                 value // 3
                 for value in ghost.colour
             )
-    
-    
+
             self.draw_piece(
                 ghost,
                 OFFSET,
                 ghost_colour
             )
-    
-    
-    
+
+
         # ====================
         # Active Piece
         # ====================
-    
+
         if board.current_piece:
-    
+
             self.draw_piece(
                 board.current_piece,
                 OFFSET,
                 board.current_piece.colour
             )
-    
-    
-    
+
+
         self.hud.draw(
             self.screen,
-            board,
+            game,
             self.board_x,
             self.board_y
         )
 
+
+        # ====================
+        # Countdown / Announcements
+        # ====================
+
+        if game.countdown_active:
+
+            self.draw_countdown(
+                game.countdown
+            )
+
+        elif game.clear_event.perfect_clear:
+
+            self.draw_perfect_clear(
+                game
+            )
+
+
+    def draw_countdown(
+        self,
+        countdown: float
+    ) -> None:
+        """
+        Draws the game start countdown.
+        """
+
+        number = int(countdown) + 1
+
+        font = pygame.font.Font(
+            None,
+            96
+        )
+
+        surface = font.render(
+            str(number),
+            True,
+            (255, 220, 0)
+        )
+
+        rectangle = surface.get_rect(
+            center=(
+                self.screen_width // 2,
+                self.screen_height // 2
+            )
+        )
+
+        self.screen.blit(
+            surface,
+            rectangle
+        )
+
+
+    def draw_perfect_clear(
+        self,
+        game
+    ) -> None:
+        """
+        Draws the Perfect Clear announcement
+        in the centre of the screen with a smooth fade.
+        """
+
+        font = pygame.font.Font(
+            None,
+            72
+        )
+
+        alpha = min(
+            255,
+            int(
+                255
+                * min(
+                    game.clear_event.timer
+                    / game.CLEAR_EVENT_TIME,
+                    1.0
+                )
+            )
+        )
+
+        surface = font.render(
+            "PERFECT CLEAR",
+            True,
+            (255, 215, 0)
+        )
+
+        surface.set_alpha(
+            alpha
+        )
+
+        rectangle = surface.get_rect(
+            center=(
+                self.screen_width // 2,
+                self.screen_height // 2
+            )
+        )
+
+        self.screen.blit(
+            surface,
+            rectangle
+        )
 
 
     def draw_piece(
@@ -321,22 +405,19 @@ class Renderer:
         """
         Draws a piece anywhere on the backend board.
         """
-    
-    
+
         for x, y in piece.get_cells():
-    
+
             screen_y = (
                 y
                 - offset
             )
-    
-    
+
             self.draw_cell(
                 x,
                 screen_y,
                 colour
             )
-
 
 
     def draw_cell(
@@ -349,7 +430,6 @@ class Renderer:
         Draws a single board cell.
         """
 
-
         rectangle = pygame.Rect(
             self.board_x + x * CELL_SIZE,
             self.board_y + y * CELL_SIZE,
@@ -357,14 +437,12 @@ class Renderer:
             CELL_SIZE
         )
 
-
         pygame.draw.rect(
             self.screen,
             GRID,
             rectangle,
             1
         )
-
 
         if colour:
 
@@ -376,7 +454,6 @@ class Renderer:
                     -2
                 )
             )
-
 
 
     def update(self) -> None:
