@@ -9,7 +9,6 @@ Purpose:
 
 """
 
-
 from constants import (
     BOARD_COLUMNS,
     BOARD_ROWS
@@ -109,3 +108,67 @@ class Collision:
         return self.valid_position(
             test_piece
         )
+
+
+    def is_immobile(
+        self,
+        piece
+    ) -> bool:
+        """
+        Returns True if the piece cannot move upward.
+
+        This is the simplified immobile check used
+        for All-Mini+ spin detection.
+        """
+
+        return not self.can_move(
+            piece,
+            0,
+            -1
+        )
+
+
+    # ====================
+    # T-Spin
+    # ====================
+
+    def count_t_spin_corners(
+        self,
+        piece
+    ) -> int:
+        """
+        Counts occupied or out-of-bounds corners
+        around a T piece.
+
+        Returns a value from 0 to 4.
+        """
+
+        if piece.type != "T":
+            return 0
+
+        corners = (
+            (piece.x, piece.y),
+            (piece.x + 2, piece.y),
+            (piece.x, piece.y + 2),
+            (piece.x + 2, piece.y + 2)
+        )
+
+        occupied = 0
+
+        for x, y in corners:
+
+            if (
+                x < 0
+                or x >= BOARD_COLUMNS
+                or y >= BOARD_ROWS
+            ):
+                occupied += 1
+                continue
+
+            if y < 0:
+                continue
+
+            if self.board.grid[y][x] is not None:
+                occupied += 1
+
+        return occupied
