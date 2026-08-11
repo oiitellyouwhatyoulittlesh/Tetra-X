@@ -43,6 +43,10 @@ class Board:
 
         self.current_piece: Piece | None = None
 
+        self.held_piece: str | None = None
+
+        self.can_hold = True
+
         self.lines = 0
         self.score = 0
 
@@ -66,6 +70,18 @@ class Board:
             ]
             for _ in range(BOARD_ROWS)
         ]
+
+
+    def is_perfect_clear(self) -> bool:
+        """
+        Returns True if the board is completely empty.
+        """
+
+        return all(
+            cell is None
+            for row in self.grid
+            for cell in row
+        )
 
 
     # ====================
@@ -94,21 +110,60 @@ class Board:
         return True
 
 
+    def hold(self) -> bool:
+        """
+        Holds or swaps the current piece.
+        """
+
+        if self.current_piece is None:
+            return False
+
+        if not self.can_hold:
+            return False
+
+
+        self.can_hold = False
+
+
+        if self.held_piece is None:
+
+            self.held_piece = (
+                self.current_piece.type
+            )
+
+            return self.spawn_piece()
+
+
+        current = self.current_piece.type
+
+        self.current_piece = Piece(
+            self.held_piece
+        )
+
+        self.current_piece.reset()
+
+        self.held_piece = current
+
+        return True
+
+
     def lock_piece(self) -> None:
         """
         Places the current piece into the board.
         """
-
+    
         if self.current_piece is None:
             return
-        
+            
         for x, y in self.current_piece.get_cells():
-
+    
             if y >= 0:
-
+    
                 self.grid[y][x] = (
                     self.current_piece.colour
                 )
+            
+        self.can_hold = True
 
 
     # ====================
@@ -240,6 +295,84 @@ class Board:
         return self.queue.get_preview()
 
 
+    def get_ghost_piece(self) -> Piece | None:
+        """
+        Returns a copy of the current piece positioned
+        where it would land.
+        """
+
+        if self.current_piece is None:
+            return None
+
+        ghost = self.current_piece.copy()
+
+        while self.collision.can_move(
+            ghost,
+            0,
+            1
+        ):
+            ghost.move(
+                0,
+                1
+            )
+
+        return ghost
+
+
+    def get_spin_type(
+        self,
+        was_rotation: bool
+    ) -> str | None:
+        """
+        Returns the type of spin performed by the current piece.
+
+        Returns:
+            "T-SPIN"
+            "MINI"
+            None
+        """
+
+        if self.current_piece is None or not was_rotation:
+            return None
+
+        piece = self.current_piece
+
+        # ====================
+        # T Piece
+        # ====================
+
+        if piece.type == "T":
+
+            corners = self.collision.count_t_spin_corners(
+                piece
+            )
+
+            if corners >= 3:
+                return "T-SPIN"
+
+            if self.collision.is_immobile(piece):
+                return "MINI"
+
+            return None
+
+        # ====================
+        # All-Mini+ Pieces
+        # ====================
+
+        if self.collision.is_immobile(piece):
+            return "MINI"
+
+        return None
+
+
+    def is_t_spin(self) -> bool:
+        """
+        Returns True if the current piece qualifies as a T-spin.
+        """
+
+        return self.get_spin_type(True) == "T-SPIN"
+
+
     def reset(self) -> None:
         """
         Resets the board.
@@ -251,5 +384,10 @@ class Board:
 
         self.lines = 0
         self.score = 0
+
+        self.current_piece = None
+
+        self.held_piece = None
+        self.can_hold = True
 
         self.spawn_piece()
