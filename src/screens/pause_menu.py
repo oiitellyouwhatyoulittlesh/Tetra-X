@@ -8,9 +8,9 @@ Purpose:
     Displays and handles the pause menu.
 """
 
-import pygame
-
 from screens.screen import Screen
+
+from input.controls import Controls
 
 
 class PauseMenu(Screen):
@@ -21,15 +21,21 @@ class PauseMenu(Screen):
     def __init__(
         self,
         screen_manager,
-        game_screen
+        game_screen,
+        settings
     ) -> None:
 
         self.screen_manager = screen_manager
         self.game_screen = game_screen
+        self.settings = settings
+
+        self.controls = Controls(
+            settings
+        )
 
         self.options = [
             "RESUME",
-            "SETTINGS",
+            "RESTART",
             "QUIT TO MENU"
         ]
 
@@ -44,35 +50,44 @@ class PauseMenu(Screen):
         self,
         events
     ) -> None:
+        """
+        Handles pause menu input.
+        """
 
-        for event in events:
+        actions = self.controls.get_event_actions(
+            events
+        )
 
-            if event.type != pygame.KEYDOWN:
-                continue
 
+        for action in actions:
 
-            if event.key == pygame.K_UP:
+            if action == "menu_up":
 
                 self.selected = (
                     self.selected - 1
                 ) % len(self.options)
 
 
-            elif event.key == pygame.K_DOWN:
+            elif action == "menu_down":
 
                 self.selected = (
                     self.selected + 1
                 ) % len(self.options)
 
 
-            elif event.key == pygame.K_ESCAPE:
+            elif action == "menu_back":
 
                 self.resume()
 
 
-            elif event.key == pygame.K_RETURN:
+            elif action == "menu_confirm":
 
                 self.select()
+
+
+            elif action == "restart":
+
+                self.restart()
 
 
     # ====================
@@ -94,11 +109,9 @@ class PauseMenu(Screen):
             self.resume()
 
 
-        elif option == "SETTINGS":
+        elif option == "RESTART":
 
-            print(
-                "SETTINGS NOT IMPLEMENTED YET"
-            )
+            self.restart()
 
 
         elif option == "QUIT TO MENU":
@@ -107,15 +120,44 @@ class PauseMenu(Screen):
 
             self.screen_manager.set_screen(
                 MainMenu(
-                    self.screen_manager
+                    self.screen_manager,
+                    self.settings
                 )
             )
 
 
+    # ====================
+    # Resume
+    # ====================
+
     def resume(self) -> None:
         """
-        Returns to the active game.
+        Returns to the active game without resetting state.
         """
+
+        self.game_screen.game.paused = False
+
+        self.game_screen.events = []
+
+        self.game_screen.game.input.reset_handling()
+
+        self.screen_manager.set_screen(
+            self.game_screen
+        )
+
+
+    # ====================
+    # Restart
+    # ====================
+
+    def restart(self) -> None:
+        """
+        Restarts the current game.
+        """
+
+        self.game_screen.game.restart()
+
+        self.game_screen.events = []
 
         self.screen_manager.set_screen(
             self.game_screen
