@@ -18,6 +18,8 @@ VERSION = "1.0.0"
 
 FPS = 60
 
+MS_PER_FRAME = 1000.0 / FPS
+
 # ====================
 # Screen
 # ====================
@@ -92,13 +94,18 @@ DEFAULT_SETTINGS = {
         "hold": "c",
 
         "pause": "ESCAPE",
-        "restart": "r"
+        "restart": "r",
+
+        "menu_up": "UP",
+        "menu_down": "DOWN",
+        "menu_confirm": "RETURN",
+        "menu_back": "ESCAPE"
     },
 
     "handling": {
         "das": 10.0,
         "arr": 2.0,
-        "dcd": 0.0,
-        "sdf": 20
+        "dcd": 1.0,
+        "sdf": 6
     }
 }
