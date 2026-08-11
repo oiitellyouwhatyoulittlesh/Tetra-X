@@ -22,6 +22,9 @@ from game.pieces import (
     get_colour
 )
 
+from game.modes import GameMode
+
+
 class HUD:
     """
     Draws the game HUD.
@@ -48,6 +51,17 @@ class HUD:
             bold=True
         )
 
+        self.stat_font = pygame.font.SysFont(
+            "Arial",
+            22,
+            bold=True
+        )
+
+        self.value_font = pygame.font.SysFont(
+            "Arial",
+            22
+        )
+
 
     # ====================
     # Drawing
@@ -56,13 +70,15 @@ class HUD:
     def draw(
         self,
         screen,
-        board,
+        game,
         board_x: int,
         board_y: int
     ) -> None:
         """
         Draws the HUD.
         """
+
+        board = game.get_board()
 
         board_width = (
             BOARD_COLUMNS * CELL_SIZE
@@ -94,6 +110,14 @@ class HUD:
             board,
             next_x,
             board_y
+        )
+
+        self.draw_game_stats(
+            screen,
+            game,
+            board_x,
+            board_y,
+            board_width
         )
 
 
@@ -150,6 +174,7 @@ class HUD:
             y - 32
         )
 
+
         if board.held_piece is not None:
 
             self.draw_mini_piece(
@@ -172,7 +197,7 @@ class HUD:
         center_y: int
     ) -> None:
         """
-        Draws a miniature tetromino centred at a position.
+        Draws a miniature piece centred at a position.
         """
 
         cells = get_cells(
@@ -279,6 +304,7 @@ class HUD:
 
         spacing = usable_height / 5
 
+
         for index, piece in enumerate(
             preview[:5]
         ):
@@ -365,3 +391,489 @@ class HUD:
                 y
             )
         )
+
+
+    # ====================
+    # Game Stats
+    # ====================
+
+    def draw_game_stats(
+        self,
+        screen,
+        game,
+        board_x: int,
+        board_y: int,
+        board_width: int
+    ) -> None:
+        """
+        Draws the game statistics based on
+        the current game mode.
+        """
+
+        right_align_x = (
+            board_x
+            - self.GAP
+        )
+
+        bottom_y = (
+            screen.get_height()
+            - 460
+        )
+
+
+        label_colour = (
+            255,
+            255,
+            255
+        )
+
+        value_colour = (
+            255,
+            255,
+            255
+        )
+
+
+        # ====================
+        # Mode Specific Stats
+        # ====================
+
+        if game.mode == GameMode.BLITZ:
+
+            total_milliseconds = int(
+                game.blitz_time * 1000
+            )
+
+            minutes = (
+                total_milliseconds // 60000
+            )
+
+            seconds = (
+                total_milliseconds // 1000
+            ) % 60
+
+            milliseconds = (
+                total_milliseconds % 1000
+            )
+
+            time_text = (
+                f"{minutes}:"
+                f"{seconds:02d}."
+                f"{milliseconds:03d}"
+            )
+
+
+            stats = [
+                (
+                    "SCORE",
+                    f"{game.score:,}"
+                ),
+
+                (
+                    "TIME",
+                    time_text
+                ),
+
+                (
+                    "LEVEL",
+                    str(game.level)
+                ),
+
+                (
+                    "LINES",
+                    f"{game.level_lines} / {game.level_line_goal}"
+                )
+            ]
+
+
+        elif game.mode == GameMode.FORTY_LINES:
+
+            display_time = (
+                game.completion_time
+                if game.completed
+                else game.game_time
+            )
+
+
+            total_milliseconds = int(
+                display_time * 1000
+            )
+
+            minutes = (
+                total_milliseconds // 60000
+            )
+
+            seconds = (
+                total_milliseconds // 1000
+            ) % 60
+
+            milliseconds = (
+                total_milliseconds % 1000
+            )
+
+
+            time_text = (
+                f"{minutes}:"
+                f"{seconds:02d}."
+                f"{milliseconds:03d}"
+            )
+
+
+            inputs = game.inputs
+            pieces = game.pieces_placed
+
+
+            inputs_per_piece = (
+                inputs / pieces
+                if pieces > 0
+                else 0.0
+            )
+
+
+            pieces_per_second = (
+                pieces / display_time
+                if display_time > 0
+                else 0.0
+            )
+
+
+            stats = [
+                (
+                    "LINES",
+                    f"{game.lines_cleared} / 40"
+                ),
+
+                (
+                    "TIME",
+                    time_text
+                ),
+
+                (
+                    "PIECES",
+                    f"{pieces}, "
+                    f"{pieces_per_second:.2f}/S"
+                ),
+
+                (
+                    "INPUTS",
+                    f"{inputs}, "
+                    f"{inputs_per_piece:.2f}/P"
+                )
+            ]
+
+
+        else:
+
+            # ====================
+            # Zen / Standard
+            # ====================
+
+            inputs = game.inputs
+            pieces = game.pieces_placed
+
+
+            inputs_per_piece = (
+                inputs / pieces
+                if pieces > 0
+                else 0.0
+            )
+
+
+            pieces_per_second = (
+                pieces / game.game_time
+                if game.game_time > 0
+                else 0.0
+            )
+
+
+            total_milliseconds = int(
+                game.game_time * 1000
+            )
+
+            minutes = (
+                total_milliseconds // 60000
+            )
+
+            seconds = (
+                total_milliseconds // 1000
+            ) % 60
+
+            milliseconds = (
+                total_milliseconds % 1000
+            )
+
+
+            time_text = (
+                f"{minutes}:"
+                f"{seconds:02d}."
+                f"{milliseconds:03d}"
+            )
+
+
+            stats = [
+                (
+                    "INPUTS",
+                    f"{inputs}, "
+                    f"{inputs_per_piece:.2f}/P"
+                ),
+
+                (
+                    "PIECES",
+                    f"{pieces}, "
+                    f"{pieces_per_second:.2f}/S"
+                ),
+
+                (
+                    "LINES",
+                    str(game.lines_cleared)
+                ),
+
+                (
+                    "TIME",
+                    time_text
+                )
+            ]
+
+
+        # ====================
+        # Dynamic Clear Event Area
+        # ====================
+
+        hold_bottom = (
+            board_y
+            + self.HOLD_HEIGHT
+        )
+
+        stats_top = bottom_y
+
+        middle_space = (
+            stats_top
+            - hold_bottom
+        )
+
+        event_height = (
+            self.get_clear_event_height(
+                game
+            )
+        )
+
+        event_y = (
+            hold_bottom
+            + middle_space // 2
+            - event_height // 2
+        )
+
+
+        self.draw_clear_event(
+            screen,
+            game,
+            right_align_x,
+            event_y
+        )
+
+
+        # ====================
+        # Render Stats
+        # ====================
+
+        line_height = 42
+
+        y = bottom_y
+
+
+        for label, value in stats:
+
+            label_surface = self.stat_font.render(
+                label,
+                True,
+                label_colour
+            )
+
+            value_surface = self.value_font.render(
+                value,
+                True,
+                value_colour
+            )
+
+
+            label_rect = label_surface.get_rect(
+                right=right_align_x,
+                y=y
+            )
+
+            value_rect = value_surface.get_rect(
+                right=right_align_x,
+                y=y + 22
+            )
+
+
+            screen.blit(
+                label_surface,
+                label_rect
+            )
+
+            screen.blit(
+                value_surface,
+                value_rect
+            )
+
+
+            y += line_height + 22
+
+
+    # ====================
+    # Clear Event
+    # ====================
+
+    def draw_clear_event(
+        self,
+        screen,
+        game,
+        right_align_x: int,
+        y: int
+    ) -> None:
+        """
+        Draws the temporary line-clear announcement and persistent B2B state.
+        """
+
+        event = game.clear_event
+
+        items = []
+
+        display_b2b = max(
+            game.back_to_back - 1,
+            0
+        )
+
+        if event.timer > 0:
+
+            # ====================
+            # Spin
+            # ====================
+
+            if event.spin_type is not None:
+
+                spin_color = (
+                    get_colour(event.spin_piece)
+                    if event.spin_piece
+                    else (255, 255, 255)
+                )
+
+                items.append(
+                    (event.spin_type, spin_color, True)
+                )
+
+
+            # ====================
+            # Line Clear
+            # ====================
+
+            if event.clear_type is not None:
+
+                items.append(
+                    (event.clear_type, (255, 255, 255), True)
+                )
+
+
+        # ====================
+        # B2B (Persistent)
+        # ====================
+
+        if display_b2b > 0:
+
+            items.append(
+                (f"B2B ×{display_b2b}", (255, 220, 0), False)
+            )
+
+
+        # ====================
+        # Combo
+        # ====================
+
+        if event.timer > 0 and event.combo > 0:
+
+            items.append(
+                (f"{event.combo} COMBO", (255, 255, 255), True)
+            )
+
+
+        if not items:
+            return
+
+
+        # ====================
+        # Alpha Calculation
+        # ====================
+
+        alpha = min(
+            255,
+            int(
+                255
+                * min(
+                    event.timer / game.CLEAR_EVENT_TIME,
+                    1.0
+                )
+            )
+        )
+
+
+        for index, (text, color, fades) in enumerate(items):
+
+            surface = self.stat_font.render(
+                text,
+                True,
+                color
+            )
+
+            if fades:
+
+                surface.set_alpha(
+                    alpha
+                )
+
+
+            rect = surface.get_rect(
+                right=right_align_x,
+                y=y + index * 28
+            )
+
+
+            screen.blit(
+                surface,
+                rect
+            )
+
+
+    def get_clear_event_height(
+        self,
+        game
+    ) -> int:
+        """
+        Returns the height required by the current clear event.
+        """
+
+        event = game.clear_event
+
+        lines = 0
+
+        display_b2b = max(
+            game.back_to_back - 1,
+            0
+        )
+
+        if event.timer > 0:
+
+            if event.spin_type is not None:
+                lines += 1
+
+            if event.clear_type is not None:
+                lines += 1
+
+            if event.combo > 0:
+                lines += 1
+
+        if display_b2b > 0:
+            lines += 1
+
+
+        return lines * 28
