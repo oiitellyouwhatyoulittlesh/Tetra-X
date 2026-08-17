@@ -6,154 +6,39 @@ File:
 
 Purpose:
     Handles piece rotation and wall kicks.
-
 """
 
 from game.collision import Collision
-
 
 # ====================
 # SRS Kick Data
 # ====================
 
-
 NORMAL_KICKS = {
-
-    "0->1": [
-        (0, 0),
-        (-1, 0),
-        (-1, -1),
-        (0, 2),
-        (-1, 2)
-    ],
-
-    "1->0": [
-        (0, 0),
-        (1, 0),
-        (1, 1),
-        (0, -2),
-        (1, -2)
-    ],
-
-    "1->2": [
-        (0, 0),
-        (1, 0),
-        (1, 1),
-        (0, -2),
-        (1, -2)
-    ],
-
-    "2->1": [
-        (0, 0),
-        (-1, 0),
-        (-1, -1),
-        (0, 2),
-        (-1, 2)
-    ],
-
-    "2->3": [
-        (0, 0),
-        (1, 0),
-        (1, -1),
-        (0, 2),
-        (1, 2)
-    ],
-
-    "3->2": [
-        (0, 0),
-        (-1, 0),
-        (-1, 1),
-        (0, -2),
-        (-1, -2)
-    ],
-
-    "3->0": [
-        (0, 0),
-        (-1, 0),
-        (-1, 1),
-        (0, -2),
-        (-1, -2)
-    ],
-
-    "0->3": [
-        (0, 0),
-        (1, 0),
-        (1, -1),
-        (0, 2),
-        (1, 2)
-    ]
+    "0->1": [(0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2)],
+    "1->0": [(0, 0), (1, 0), (1, 1), (0, -2), (1, -2)],
+    "1->2": [(0, 0), (1, 0), (1, 1), (0, -2), (1, -2)],
+    "2->1": [(0, 0), (-1, 0), (-1, -1), (0, 2), (-1, 2)],
+    "2->3": [(0, 0), (1, 0), (1, -1), (0, 2), (1, 2)],
+    "3->2": [(0, 0), (-1, 0), (-1, 1), (0, -2), (-1, -2)],
+    "3->0": [(0, 0), (-1, 0), (-1, 1), (0, -2), (-1, -2)],
+    "0->3": [(0, 0), (1, 0), (1, -1), (0, 2), (1, 2)],
 }
 
 
 # ====================
-# I Piece Kick Data
+# I-Piece Kick Data
 # ====================
 
 I_KICKS = {
-
-    "0->1": [
-        (0, 0),
-        (-2, 0),
-        (1, 0),
-        (-2, 1),
-        (1, -2)
-    ],
-
-    "1->0": [
-        (0, 0),
-        (2, 0),
-        (-1, 0),
-        (2, -1),
-        (-1, 2)
-    ],
-
-    "1->2": [
-        (0, 0),
-        (-1, 0),
-        (2, 0),
-        (-1, -2),
-        (2, 1)
-    ],
-
-    "2->1": [
-        (0, 0),
-        (1, 0),
-        (-2, 0),
-        (1, 2),
-        (-2, -1)
-    ],
-
-    "2->3": [
-        (0, 0),
-        (2, 0),
-        (-1, 0),
-        (2, -1),
-        (-1, 2)
-    ],
-
-    "3->2": [
-        (0, 0),
-        (-2, 0),
-        (1, 0),
-        (-2, 1),
-        (1, -2)
-    ],
-
-    "3->0": [
-        (0, 0),
-        (1, 0),
-        (-2, 0),
-        (1, 2),
-        (-2, -1)
-    ],
-
-    "0->3": [
-        (0, 0),
-        (-1, 0),
-        (2, 0),
-        (-1, -2),
-        (2, 1)
-    ]
+    "0->1": [(0, 0), (-2, 0), (1, 0), (-2, 1), (1, -2)],
+    "1->0": [(0, 0), (2, 0), (-1, 0), (2, -1), (-1, 2)],
+    "1->2": [(0, 0), (-1, 0), (2, 0), (-1, -2), (2, 1)],
+    "2->1": [(0, 0), (1, 0), (-2, 0), (1, 2), (-2, -1)],
+    "2->3": [(0, 0), (2, 0), (-1, 0), (2, -1), (-1, 2)],
+    "3->2": [(0, 0), (-2, 0), (1, 0), (-2, 1), (1, -2)],
+    "3->0": [(0, 0), (1, 0), (-2, 0), (1, 2), (-2, -1)],
+    "0->3": [(0, 0), (-1, 0), (2, 0), (-1, -2), (2, 1)],
 }
 
 
@@ -162,42 +47,10 @@ I_KICKS = {
 # ====================
 
 KICKS_180 = {
-
-    "0->2": [
-        (0, 0),
-        (0, -1),
-        (1, -1),
-        (-1, -1),
-        (1, 0),
-        (-1, 0)
-    ],
-
-    "2->0": [
-        (0, 0),
-        (0, 1),
-        (-1, 1),
-        (1, 1),
-        (-1, 0),
-        (1, 0)
-    ],
-
-    "1->3": [
-        (0, 0),
-        (1, 0),
-        (1, 2),
-        (1, -1),
-        (2, 0),
-        (-1, 0)
-    ],
-
-    "3->1": [
-        (0, 0),
-        (-1, 0),
-        (-1, 2),
-        (-1, -1),
-        (-2, 0),
-        (1, 0)
-    ]
+    "0->2": [(0, 0), (0, -1), (1, -1), (-1, -1), (1, 0), (-1, 0)],
+    "2->0": [(0, 0), (0, 1), (-1, 1), (1, 1), (-1, 0), (1, 0)],
+    "1->3": [(0, 0), (1, 0), (1, 2), (1, -1), (2, 0), (-1, 0)],
+    "3->1": [(0, 0), (-1, 0), (-1, 2), (-1, -1), (-2, 0), (1, 0)],
 }
 
 
@@ -214,14 +67,14 @@ class Rotation:
         self,
         collision: Collision,
         board
-    ):
+    ) -> None:
 
         self.collision = collision
         self.board = board
 
 
     # ====================
-    # Rotation
+    # Rotation Actions
     # ====================
 
     def rotate_cw(
@@ -243,7 +96,7 @@ class Rotation:
         piece
     ) -> bool:
         """
-        Attempts counter clockwise rotation.
+        Attempts counter-clockwise rotation.
         """
 
         return self._rotate(
@@ -267,7 +120,7 @@ class Rotation:
 
 
     # ====================
-    # Internal
+    # Internal Logic
     # ====================
 
     def _rotate(
@@ -277,17 +130,17 @@ class Rotation:
     ) -> bool:
         """
         Attempts a rotation and applies wall kicks.
-
-        The piece is returned to its exact original
-        rotation and position if every kick fails.
         """
+
+        # O-piece does not rotate or kick
+        if piece.type == "O":
+            return False
 
         old_rotation = piece.rotation
 
         new_rotation = (
             old_rotation + amount
         ) % 4
-
 
         kick_data = self.get_kicks(
             piece,
@@ -296,16 +149,13 @@ class Rotation:
             amount
         )
 
-
         if not kick_data:
             return False
 
-
-        # Apply the new rotation once.
+        # Apply rotation state
         piece.rotation = new_rotation
 
-
-        # Test every kick.
+        # Test kicks
         for dx, dy in kick_data:
 
             piece.move(
@@ -313,34 +163,27 @@ class Rotation:
                 dy
             )
 
-
             if self.collision.valid_position(
                 piece
             ):
 
-                # Rotation succeeded.
-                # Keep the new rotation and position.
+                # Kick successful
                 return True
 
-
-            # Failed kick.
-            # Undo only the position change.
+            # Undo position shift on failure
             piece.move(
                 -dx,
                 -dy
             )
 
-
-        # Every kick failed.
-        # Restore the original rotation.
+        # All kicks failed, revert rotation state
         piece.rotation = old_rotation
-
 
         return False
 
 
     # ====================
-    # Kick Selection
+    # Kick Table Lookup
     # ====================
 
     def get_kicks(
@@ -351,15 +194,14 @@ class Rotation:
         amount: int
     ):
         """
-        Returns the correct kick table.
+        Returns the appropriate kick table for the transition.
         """
 
         transition = (
             f"{old_rotation}->{new_rotation}"
         )
 
-
-        # 180 degree rotation.
+        # 180 Degree Rotations
         if abs(amount) == 2:
 
             return KICKS_180.get(
@@ -367,8 +209,7 @@ class Rotation:
                 []
             )
 
-
-        # I piece.
+        # I Piece
         if piece.type == "I":
 
             return I_KICKS.get(
@@ -376,8 +217,7 @@ class Rotation:
                 []
             )
 
-
-        # J, L, S, T and Z.
+        # J, L, S, T, Z Pieces
         return NORMAL_KICKS.get(
             transition,
             []
