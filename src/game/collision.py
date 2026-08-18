@@ -11,7 +11,7 @@ Purpose:
 
 from constants import (
     BOARD_COLUMNS,
-    BOARD_ROWS
+    BOARD_ROWS,
 )
 
 

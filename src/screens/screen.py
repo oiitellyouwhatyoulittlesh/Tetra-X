@@ -36,8 +36,6 @@ class Screen:
         Handles input events.
         """
 
-        pass
-
 
     def update(
         self,
@@ -47,8 +45,6 @@ class Screen:
         Updates the screen.
         """
 
-        pass
-
 
     def draw(
         self,
@@ -57,8 +53,6 @@ class Screen:
         """
         Draws the screen.
         """
-
-        pass
 
 
 class ScreenManager:

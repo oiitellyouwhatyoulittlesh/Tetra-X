@@ -2,17 +2,16 @@
 Tetra-X
 
 File:
-    game_screen.py
+game_screen.py
 
 Purpose:
-    Provides the gameplay screen.
+Provides the gameplay screen.
 """
-
-from screens.screen import Screen
-from screens.pause_menu import PauseMenu
 
 from game.game import Game
 from game.modes import GameMode
+from screens.pause_menu import PauseMenu
+from screens.screen import Screen
 
 
 class GameScreen(Screen):
@@ -37,7 +36,6 @@ class GameScreen(Screen):
 
         self.game.start()
 
-
     # ====================
     # Input
     # ====================
@@ -51,7 +49,6 @@ class GameScreen(Screen):
         """
 
         self.events = events
-
 
     # ====================
     # Update
@@ -72,8 +69,11 @@ class GameScreen(Screen):
             self.events
         )
 
-        # Clear events so they don't leak into subsequent frames
         self.events = []
+
+        # ====================
+        # Pause
+        # ====================
 
         if (
             not was_paused
@@ -88,6 +88,58 @@ class GameScreen(Screen):
                 )
             )
 
+            return
+
+        # ====================
+        # Results
+        # ====================
+
+        if (
+            self.game.game_over
+            and self.mode in (
+                GameMode.BLITZ,
+                GameMode.FORTY_LINES
+            )
+        ):
+
+            from screens.results_screen import ResultsScreen
+
+            topped_out = (
+                not self.game.completed
+                and self.game.results == {}
+            )
+
+            if topped_out:
+
+                results = self.game.create_results()
+
+                new_record = False
+
+                record_difference = 0
+
+            else:
+
+                results = self.game.results
+
+                new_record = self.game.new_record
+
+                record_difference = (
+                    self.game.record_difference
+                )
+
+            self.screen_manager.set_screen(
+                ResultsScreen(
+                    self.screen_manager,
+                    self.game.settings,
+                    self.mode,
+                    results,
+                    new_record,
+                    record_difference,
+                    topped_out
+                )
+            )
+
+            return
 
     # ====================
     # Drawing

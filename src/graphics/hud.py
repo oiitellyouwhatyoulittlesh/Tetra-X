@@ -12,17 +12,16 @@ Purpose:
 import pygame
 
 from constants import (
-    CELL_SIZE,
     BOARD_COLUMNS,
-    GRID
+    CELL_SIZE,
+    GARBAGE_GREY,
+    GRID,
 )
-
+from game.modes import GameMode
 from game.pieces import (
     get_cells,
-    get_colour
+    get_colour,
 )
-
-from game.modes import GameMode
 
 
 class HUD:
@@ -72,7 +71,8 @@ class HUD:
         screen,
         game,
         board_x: int,
-        board_y: int
+        board_y: int,
+        zen_topout: bool = False
     ) -> None:
         """
         Draws the HUD.
@@ -102,14 +102,16 @@ class HUD:
             screen,
             board,
             hold_x,
-            board_y
+            board_y,
+            zen_topout
         )
 
         self.draw_next_panel(
             screen,
             board,
             next_x,
-            board_y
+            board_y,
+            zen_topout
         )
 
         self.draw_game_stats(
@@ -130,7 +132,8 @@ class HUD:
         screen,
         board,
         x: int,
-        y: int
+        y: int,
+        zen_topout: bool = False
     ) -> None:
         """
         Draws the hold panel.
@@ -181,7 +184,8 @@ class HUD:
                 screen,
                 board.held_piece,
                 x + self.PANEL_WIDTH // 2,
-                y + self.HOLD_HEIGHT // 2
+                y + self.HOLD_HEIGHT // 2,
+                GARBAGE_GREY if zen_topout or not board.can_hold else None
             )
 
 
@@ -194,7 +198,8 @@ class HUD:
         screen,
         piece: str,
         center_x: int,
-        center_y: int
+        center_y: int,
+        override_colour=None
     ) -> None:
         """
         Draws a miniature piece centred at a position.
@@ -205,8 +210,10 @@ class HUD:
             0
         )
 
-        colour = get_colour(
-            piece
+        colour = (
+            override_colour
+            if override_colour is not None
+            else get_colour(piece)
         )
 
 
@@ -285,7 +292,8 @@ class HUD:
         screen,
         board,
         x: int,
-        y: int
+        y: int,
+        zen_topout: bool = False
     ) -> None:
         """
         Draws the next panel.
@@ -320,7 +328,8 @@ class HUD:
                 screen,
                 piece,
                 x + self.PANEL_WIDTH // 2,
-                int(center_y)
+                int(center_y),
+                GARBAGE_GREY if zen_topout else None
             )
 
 
@@ -550,14 +559,18 @@ class HUD:
 
                 (
                     "PIECES",
-                    f"{pieces}, "
-                    f"{pieces_per_second:.2f}/S"
+                    (
+                        f"{pieces}, "
+                        f"{pieces_per_second:.2f}/S"
+                    )
                 ),
 
                 (
                     "INPUTS",
-                    f"{inputs}, "
-                    f"{inputs_per_piece:.2f}/P"
+                    (
+                        f"{inputs}, "
+                        f"{inputs_per_piece:.2f}/P"
+                    )
                 )
             ]
 
@@ -613,14 +626,18 @@ class HUD:
             stats = [
                 (
                     "INPUTS",
-                    f"{inputs}, "
-                    f"{inputs_per_piece:.2f}/P"
+                    (
+                        f"{inputs}, "
+                        f"{inputs_per_piece:.2f}/P"
+                    )
                 ),
 
                 (
                     "PIECES",
-                    f"{pieces}, "
-                    f"{pieces_per_second:.2f}/S"
+                    (
+                        f"{pieces}, "
+                        f"{pieces_per_second:.2f}/S"
+                    )
                 ),
 
                 (

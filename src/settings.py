@@ -14,14 +14,12 @@ import pygame
 
 from constants import (
     DEFAULT_SETTINGS,
-    SETTINGS_FILE
+    SETTINGS_FILE,
 )
-
 from save.json_manager import (
     load_json,
-    save_json
+    save_json,
 )
-
 
 # ====================
 # Key Map

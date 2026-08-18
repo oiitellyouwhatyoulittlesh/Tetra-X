@@ -8,11 +8,8 @@ Purpose:
     Starts the game and runs the main loop.
 """
 
-import pygame
-
-import sys
 import os
-
+import sys
 
 sys.path.insert(
     0,
@@ -22,15 +19,13 @@ sys.path.insert(
     )
 )
 
+import pygame
 
 from constants import FPS
-
 from graphics.renderer import Renderer
-from settings import Settings
-
-from screens.screen import ScreenManager
 from screens.main_menu import MainMenu
-
+from screens.screen import ScreenManager
+from settings import Settings
 
 
 def main() -> None:
@@ -47,7 +42,6 @@ def main() -> None:
         settings
     )
 
-
     screen_manager.set_screen(
         MainMenu(
             screen_manager,
@@ -55,12 +49,9 @@ def main() -> None:
         )
     )
 
-
     clock = pygame.time.Clock()
 
-
     running = True
-
 
     while running:
 
@@ -68,9 +59,7 @@ def main() -> None:
             clock.tick(FPS) / 1000
         )
 
-
         events = pygame.event.get()
-
 
         for event in events:
 
@@ -78,16 +67,13 @@ def main() -> None:
 
                 running = False
 
-
         screen_manager.handle_events(
             events
         )
 
-
         screen_manager.update(
             delta_time
         )
-
 
         renderer.clear()
 
@@ -95,10 +81,7 @@ def main() -> None:
 
         renderer.update()
 
-
-
     pygame.quit()
-
 
 
 if __name__ == "__main__":

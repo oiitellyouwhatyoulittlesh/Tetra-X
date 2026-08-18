@@ -244,18 +244,17 @@ class ValueSelect(Screen):
 
             elif event.type == pygame.KEYUP:
 
-                if event.key == self.settings.controls.menu_up:
+                # ====================
+                # Stop Navigation
+                # ====================
 
-                    if self.navigation_direction == -1:
+                stop_conditions = {
+                    self.settings.controls.menu_up: -1,
+                    self.settings.controls.menu_down: 1,
+                }
 
-                        self.navigation_direction = 0
-
-
-                elif event.key == self.settings.controls.menu_down:
-
-                    if self.navigation_direction == 1:
-
-                        self.navigation_direction = 0
+                if stop_conditions.get(event.key) == self.navigation_direction:
+                    self.navigation_direction = 0
 
 
     # ====================
@@ -337,7 +336,7 @@ class ValueSelect(Screen):
 
 
     # ====================
-    # Update
+    # Drawing
     # ====================
 
     def draw(
@@ -408,12 +407,6 @@ class ValueSelect(Screen):
             80,
             200,
             255
-        )
-
-        muted_colour = (
-            120,
-            120,
-            120
         )
 
 

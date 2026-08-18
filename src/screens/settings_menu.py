@@ -28,7 +28,8 @@ class SettingsMenu(Screen):
     def __init__(
         self,
         screen_manager,
-        settings
+        settings,
+        previous_screen=None
     ) -> None:
 
         super().__init__(
@@ -36,6 +37,7 @@ class SettingsMenu(Screen):
         )
 
         self.screen_manager = screen_manager
+        self.previous_screen = previous_screen
 
         # ====================
         # Menu Entries
@@ -187,6 +189,12 @@ class SettingsMenu(Screen):
                 "type": "reset",
                 "action": "reset",
                 "name": "Reset All Settings"
+            },
+
+            {
+                "type": "reset_data",
+                "action": "reset_data",
+                "name": "Reset All Data"
             }
         ]
 
@@ -262,21 +270,17 @@ class SettingsMenu(Screen):
 
             elif event.type == pygame.KEYUP:
 
-                if (
-                    event.key
-                    == self.settings.controls.menu_up
-                ):
+                # ====================
+                # Stop Navigation
+                # ====================
 
-                    if self.navigation_direction == -1:
+                stop_conditions = {
+                    self.settings.controls.menu_up: -1,
+                    self.settings.controls.menu_down: 1,
+                }
 
-                        self.navigation_direction = 0
-
-
-                elif event.key == self.settings.controls.menu_down:
-
-                    if self.navigation_direction == 1:
-
-                        self.navigation_direction = 0
+                if stop_conditions.get(event.key) == self.navigation_direction:
+                    self.navigation_direction = 0
 
 
     # ====================
@@ -374,6 +378,20 @@ class SettingsMenu(Screen):
             )
 
             return
+        
+        if entry["type"] == "reset_data":
+
+            from screens.reset_data import ResetData
+
+            self.screen_manager.set_screen(
+                ResetData(
+                    self.screen_manager,
+                    self.settings,
+                    self
+                )
+            )
+
+            return
 
 
     # ====================
@@ -382,17 +400,25 @@ class SettingsMenu(Screen):
 
     def go_back(self) -> None:
         """
-        Returns to the main menu.
+        Returns to the previous screen or the main menu.
         """
 
-        from screens.main_menu import MainMenu
+        if self.previous_screen:
 
-        self.screen_manager.set_screen(
-            MainMenu(
-                self.screen_manager,
-                self.settings
+            self.screen_manager.set_screen(
+                self.previous_screen
             )
-        )
+
+        else:
+
+            from screens.main_menu import MainMenu
+
+            self.screen_manager.set_screen(
+                MainMenu(
+                    self.screen_manager,
+                    self.settings
+                )
+            )
 
 
     # ====================

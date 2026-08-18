@@ -58,6 +58,7 @@ BACKGROUND = (20, 20, 20)
 GRID = (45, 45, 45)
 TEXT = (255, 255, 255)
 SHADOW = (0, 0, 0)
+GARBAGE_GREY = (100, 100, 100)
 
 # ====================
 # File Paths
@@ -107,5 +108,31 @@ DEFAULT_SETTINGS = {
         "arr": 2.0,
         "dcd": 1.0,
         "sdf": 6
+    }
+}
+
+# ====================
+# Default Records
+# ====================
+
+DEFAULT_RECORDS = {
+    "blitz": {
+        "score": 0,
+        "lines": 0,
+        "pieces": 0,
+        "pps": 0.0,
+        "inputs": 0,
+        "inputs_per_piece": 0.0,
+        "time": 0.0,
+        "level": 1
+    },
+
+    "forty_lines": {
+        "time": None,
+        "lines": 0,
+        "pieces": 0,
+        "pps": 0.0,
+        "inputs": 0,
+        "inputs_per_piece": 0.0
     }
 }

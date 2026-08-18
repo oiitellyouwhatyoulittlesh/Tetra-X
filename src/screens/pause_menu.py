@@ -8,9 +8,11 @@ Purpose:
     Displays and handles the pause menu.
 """
 
-from screens.screen import Screen
+import pygame
 
+from game.modes import GameMode
 from input.controls import Controls
+from screens.screen import Screen
 
 
 class PauseMenu(Screen):
@@ -25,6 +27,10 @@ class PauseMenu(Screen):
         settings
     ) -> None:
 
+        super().__init__(
+            settings
+        )
+
         self.screen_manager = screen_manager
         self.game_screen = game_screen
         self.settings = settings
@@ -33,14 +39,36 @@ class PauseMenu(Screen):
             settings
         )
 
-        self.options = [
-            "RESUME",
-            "RESTART",
-            "QUIT TO MENU"
-        ]
+        # ====================
+        # Menu Options
+        # ====================
+
+        if self.game_screen.game.mode == GameMode.ZEN:
+
+            self.options = [
+                "RESUME",
+                "RESTART",
+                "QUIT TO MENU"
+            ]
+
+        else:
+
+            self.options = [
+                "RESTART",
+                "QUIT TO MENU"
+            ]
 
         self.selected = 0
 
+        # ====================
+        # Navigation
+        # ====================
+
+        self.navigation_timer = 0.0
+        self.navigation_direction = 0
+
+        self.navigation_initial_delay = 0.30
+        self.navigation_repeat_delay = 0.08
 
     # ====================
     # Input
@@ -58,8 +86,11 @@ class PauseMenu(Screen):
             events
         )
 
-
         for action in actions:
+
+            # ====================
+            # Menu Up
+            # ====================
 
             if action == "menu_up":
 
@@ -67,6 +98,14 @@ class PauseMenu(Screen):
                     self.selected - 1
                 ) % len(self.options)
 
+                self.navigation_direction = -1
+                self.navigation_timer = (
+                    -self.navigation_initial_delay
+                )
+
+            # ====================
+            # Menu Down
+            # ====================
 
             elif action == "menu_down":
 
@@ -74,21 +113,53 @@ class PauseMenu(Screen):
                     self.selected + 1
                 ) % len(self.options)
 
+                self.navigation_direction = 1
+                self.navigation_timer = (
+                    -self.navigation_initial_delay
+                )
+
+            # ====================
+            # Menu Back
+            # ====================
 
             elif action == "menu_back":
 
-                self.resume()
+                if self.game_screen.game.mode == GameMode.ZEN:
 
+                    self.resume()
+
+            # ====================
+            # Menu Confirm
+            # ====================
 
             elif action == "menu_confirm":
 
                 self.select()
 
+            # ====================
+            # Restart
+            # ====================
 
             elif action == "restart":
 
                 self.restart()
 
+        # ====================
+        # Stop Navigation
+        # ====================
+
+        for event in events:
+
+            if event.type != pygame.KEYUP:
+                continue
+
+            stop_conditions = {
+                self.settings.controls.menu_up: -1,
+                self.settings.controls.menu_down: 1,
+            }
+
+            if stop_conditions.get(event.key) == self.navigation_direction:
+                self.navigation_direction = 0
 
     # ====================
     # Selection
@@ -96,23 +167,20 @@ class PauseMenu(Screen):
 
     def select(self) -> None:
         """
-        Handles the selected option.
+        Handles the selected pause-menu option.
         """
 
         option = self.options[
             self.selected
         ]
 
-
         if option == "RESUME":
 
             self.resume()
 
-
         elif option == "RESTART":
 
             self.restart()
-
 
         elif option == "QUIT TO MENU":
 
@@ -125,14 +193,14 @@ class PauseMenu(Screen):
                 )
             )
 
-
     # ====================
     # Resume
     # ====================
 
     def resume(self) -> None:
         """
-        Returns to the active game without resetting state.
+        Returns to the active game without
+        resetting state.
         """
 
         self.game_screen.game.paused = False
@@ -144,7 +212,6 @@ class PauseMenu(Screen):
         self.screen_manager.set_screen(
             self.game_screen
         )
-
 
     # ====================
     # Restart
@@ -163,7 +230,6 @@ class PauseMenu(Screen):
             self.game_screen
         )
 
-
     # ====================
     # Update
     # ====================
@@ -172,9 +238,33 @@ class PauseMenu(Screen):
         self,
         delta_time: float
     ) -> None:
+        """
+        Handles held menu navigation.
+        """
 
-        pass
+        if self.navigation_direction == 0:
 
+            return
+
+        self.navigation_timer += delta_time
+
+        if self.navigation_timer < 0:
+
+            return
+
+        while (
+            self.navigation_timer
+            >= self.navigation_repeat_delay
+        ):
+
+            self.navigation_timer -= (
+                self.navigation_repeat_delay
+            )
+
+            self.selected = (
+                self.selected
+                + self.navigation_direction
+            ) % len(self.options)
 
     # ====================
     # Drawing

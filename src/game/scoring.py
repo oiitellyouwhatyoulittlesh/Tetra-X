@@ -45,10 +45,10 @@ T_SPIN_SCORES = {
 
 
 # ====================
-# Perfect Clear
+# All Clear
 # ====================
 
-PERFECT_CLEAR_SCORE = 3500
+ALL_CLEAR_SCORE = 3500
 
 
 # ====================
@@ -113,18 +113,18 @@ def get_t_spin_score(
 
 
 # ====================
-# Perfect Clear
+# All Clear
 # ====================
 
-def get_perfect_clear_score(
+def get_all_clear_score(
     level: int
 ) -> int:
     """
-    Returns the score awarded for a
-    Perfect Clear.
+    Returns the score awarded for
+    an All Clear.
     """
 
-    return PERFECT_CLEAR_SCORE * level
+    return ALL_CLEAR_SCORE * level
 
 
 # ====================
@@ -166,13 +166,13 @@ def get_soft_drop_score(
 def is_difficult_clear(
     cleared: int,
     spin_type: str | None = None,
-    perfect_clear: bool = False
+    all_clear: bool = False
 ) -> bool:
     """
     Returns True if the clear qualifies for Back-to-Back.
     """
 
-    if perfect_clear:
+    if all_clear:
         return True
 
     if spin_type is not None and cleared > 0:

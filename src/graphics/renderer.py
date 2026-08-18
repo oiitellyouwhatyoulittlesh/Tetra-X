@@ -12,13 +12,14 @@ Purpose:
 import pygame
 
 from constants import (
-    CELL_SIZE,
-    BOARD_COLUMNS,
-    VISIBLE_ROWS,
     BACKGROUND,
-    GRID
+    BOARD_COLUMNS,
+    CELL_SIZE,
+    GARBAGE_GREY,
+    GRID,
+    VISIBLE_ROWS,
 )
-
+from game.modes import GameMode
 from graphics.hud import HUD
 
 
@@ -118,6 +119,21 @@ class Renderer:
 
         self.clear()
 
+        # ====================
+        # Colours
+        # ====================
+
+        normal_colour = (
+            255,
+            255,
+            255
+        )
+
+        selected_colour = (
+            80,
+            200,
+            255
+        )
 
         # ====================
         # Title
@@ -126,7 +142,7 @@ class Renderer:
         title_surface = self.menu_title_font.render(
             title,
             True,
-            (255, 255, 255)
+            normal_colour
         )
 
         title_rectangle = title_surface.get_rect(
@@ -141,7 +157,6 @@ class Renderer:
             title_rectangle
         )
 
-
         # ====================
         # Options
         # ====================
@@ -152,10 +167,19 @@ class Renderer:
             self.screen_height // 2
         )
 
-
         for index, option in enumerate(options):
 
-            if index == selected:
+            is_selected = (
+                index == selected
+            )
+
+            colour = (
+                selected_colour
+                if is_selected
+                else normal_colour
+            )
+
+            if is_selected:
 
                 text = (
                     "> "
@@ -166,13 +190,11 @@ class Renderer:
 
                 text = option
 
-
             option_surface = self.menu_option_font.render(
                 text,
                 True,
-                (255, 255, 255)
+                colour
             )
-
 
             option_rectangle = option_surface.get_rect(
                 center=(
@@ -181,7 +203,6 @@ class Renderer:
                     + index * option_spacing
                 )
             )
-
 
             self.screen.blit(
                 option_surface,
@@ -195,6 +216,11 @@ class Renderer:
         """
 
         board = game.get_board()
+
+        zen_topout = (
+            game.mode == GameMode.ZEN
+            and game.zen_topout_timer > 0
+        )
 
         OFFSET = (
             len(board.grid)
@@ -220,10 +246,16 @@ class Renderer:
                 BOARD_COLUMNS
             ):
 
+                colour = board.grid[board_y][x]
+
+                if zen_topout and colour:
+
+                    colour = GARBAGE_GREY
+
                 self.draw_cell(
                     x,
                     screen_y,
-                    board.grid[board_y][x]
+                    colour
                 )
 
 
@@ -248,10 +280,16 @@ class Renderer:
                         - OFFSET
                     )
 
+                    colour = cell
+
+                    if zen_topout and colour:
+
+                        colour = GARBAGE_GREY
+
                     self.draw_cell(
                         x,
                         screen_y,
-                        cell
+                        colour
                     )
 
 
@@ -263,10 +301,16 @@ class Renderer:
 
         if ghost:
 
-            ghost_colour = tuple(
-                value // 3
-                for value in ghost.colour
-            )
+            if zen_topout:
+
+                ghost_colour = GARBAGE_GREY
+
+            else:
+
+                ghost_colour = tuple(
+                    value // 3
+                    for value in ghost.colour
+                )
 
             self.draw_piece(
                 ghost,
@@ -281,10 +325,16 @@ class Renderer:
 
         if board.current_piece:
 
+            piece_colour = (
+                GARBAGE_GREY
+                if zen_topout
+                else board.current_piece.colour
+            )
+
             self.draw_piece(
                 board.current_piece,
                 OFFSET,
-                board.current_piece.colour
+                piece_colour
             )
 
 
@@ -292,7 +342,8 @@ class Renderer:
             self.screen,
             game,
             self.board_x,
-            self.board_y
+            self.board_y,
+            zen_topout
         )
 
 
@@ -306,9 +357,9 @@ class Renderer:
                 game.countdown
             )
 
-        elif game.clear_event.perfect_clear:
+        elif game.clear_event.all_clear:
 
-            self.draw_perfect_clear(
+            self.draw_all_clear(
                 game
             )
 
@@ -347,13 +398,14 @@ class Renderer:
         )
 
 
-    def draw_perfect_clear(
+    def draw_all_clear(
         self,
         game
     ) -> None:
         """
-        Draws the Perfect Clear announcement
-        in the centre of the screen with a smooth fade.
+        Draws the All Clear announcement
+        in the centre of the screen with
+        a smooth fade.
         """
 
         font = pygame.font.Font(
@@ -373,26 +425,62 @@ class Renderer:
             )
         )
 
-        surface = font.render(
-            "PERFECT CLEAR",
+
+        # ====================
+        # ALL
+        # ====================
+
+        all_surface = font.render(
+            "ALL",
             True,
             (255, 215, 0)
         )
 
-        surface.set_alpha(
+        all_surface.set_alpha(
             alpha
         )
 
-        rectangle = surface.get_rect(
+
+        all_rectangle = all_surface.get_rect(
             center=(
                 self.screen_width // 2,
-                self.screen_height // 2
+                self.screen_height // 2 - 40
             )
         )
 
+
         self.screen.blit(
-            surface,
-            rectangle
+            all_surface,
+            all_rectangle
+        )
+
+
+        # ====================
+        # CLEAR
+        # ====================
+
+        clear_surface = font.render(
+            "CLEAR",
+            True,
+            (255, 215, 0)
+        )
+
+        clear_surface.set_alpha(
+            alpha
+        )
+
+
+        clear_rectangle = clear_surface.get_rect(
+            center=(
+                self.screen_width // 2,
+                self.screen_height // 2 + 40
+            )
+        )
+
+
+        self.screen.blit(
+            clear_surface,
+            clear_rectangle
         )
 
 

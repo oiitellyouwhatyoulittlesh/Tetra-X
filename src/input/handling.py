@@ -9,9 +9,21 @@ Purpose:
 
 """
 
-from settings import Settings
+"""
+Note:
+    I'm aware about the issue where when you turn cancel_das off,
+    it completely ignores DAS and makes it instant, I'm also
+    aware that DCD is buggy, and prefer_soft_drop in game.py is a
+    bit weird. At the moment I have no fix for any of those, and I
+    do not intend on fixing them in this game myself. So unfortunately
+    I cannot 100% replicate TETR.IO's handling system, for this version
+    of Tetra-X anyways.
+"""
+
 from typing import Literal
+
 from constants import MS_PER_FRAME
+from settings import Settings
 
 
 class InputHandler:
@@ -145,17 +157,10 @@ class InputHandler:
         delta_time: float
     ) -> None:
 
-        if self.dcd_timer > 0:
-
-            self.dcd_timer -= (
-                delta_time
-                * 1000
-            )
-
-
-            if self.dcd_timer < 0:
-
-                self.dcd_timer = 0
+        self.dcd_timer = max(
+            self.dcd_timer - (delta_time * 1000),
+            0
+        )
 
 
 

@@ -5,7 +5,7 @@ File:
     bag.py
 
 Purpose:
-    Implements the 7-bag randomiser.
+    Implements the 7 bag randomiser.
 
 """
 
@@ -14,10 +14,10 @@ import random
 
 class Bag:
     """
-    Represents the game's 7-bag randomiser.
+    Represents the game's 7 bag randomiser.
     """
 
-    PIECES = [
+    PIECES = (
         "I",
         "O",
         "T",
@@ -25,7 +25,7 @@ class Bag:
         "Z",
         "J",
         "L"
-    ]
+    )
 
     def __init__(self) -> None:
 
@@ -42,7 +42,7 @@ class Bag:
         Creates a new shuffled bag.
         """
 
-        new_bag = self.PIECES.copy()
+        new_bag = list(self.PIECES)
 
         random.shuffle(new_bag)
 

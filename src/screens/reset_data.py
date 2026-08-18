@@ -2,20 +2,24 @@
 Tetra-X
 
 File:
-    reset_settings.py
+    reset_data.py
 
 Purpose:
-    Confirms and performs a full settings reset.
+    Confirms and performs a full personal-record reset.
 """
+
+from copy import deepcopy
 
 import pygame
 
+from constants import DEFAULT_RECORDS
+from save.records import save_records
 from screens.screen import Screen
 
 
-class ResetSettings(Screen):
+class ResetData(Screen):
     """
-    Confirmation screen for resetting all settings.
+    Confirmation screen for resetting all personal data.
     """
 
     def __init__(
@@ -34,7 +38,7 @@ class ResetSettings(Screen):
 
         self.options = [
             "CANCEL",
-            "RESET ALL SETTINGS"
+            "RESET ALL DATA"
         ]
 
         self.selected = 0
@@ -142,11 +146,26 @@ class ResetSettings(Screen):
 
         if self.selected == 1:
 
-            self.settings.reset()
+            self.reset_data()
 
             self.screen_manager.set_screen(
                 self.return_screen
             )
+
+
+    # ====================
+    # Reset Data
+    # ====================
+
+    def reset_data(self) -> None:
+        """
+        Resets all personal records to their
+        default values.
+        """
+
+        save_records(
+            deepcopy(DEFAULT_RECORDS)
+        )
 
 
     # ====================
@@ -210,7 +229,7 @@ class ResetSettings(Screen):
         renderer
     ) -> None:
         """
-        Draws the reset confirmation screen.
+        Draws the reset data confirmation screen.
         """
 
         screen = renderer.screen
@@ -288,7 +307,7 @@ class ResetSettings(Screen):
         # ====================
 
         title = title_font.render(
-            "RESET ALL SETTINGS?",
+            "RESET ALL DATA?",
             True,
             normal_colour
         )
@@ -311,8 +330,8 @@ class ResetSettings(Screen):
         # ====================
 
         lines = [
-            "This will restore all controls,",
-            "handling settings and other settings",
+            "This will permanently reset your",
+            "Blitz and 40 Lines personal records",
             "to their default values."
         ]
 

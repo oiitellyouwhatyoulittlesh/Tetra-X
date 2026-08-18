@@ -11,12 +11,12 @@ Purpose:
 
 from constants import (
     PIECE_I,
-    PIECE_O,
-    PIECE_T,
-    PIECE_S,
-    PIECE_Z,
     PIECE_J,
-    PIECE_L
+    PIECE_L,
+    PIECE_O,
+    PIECE_S,
+    PIECE_T,
+    PIECE_Z,
 )
 
 # ====================
@@ -40,7 +40,7 @@ PIECES = {
 
     "O": {
         "colour": PIECE_O,
-        "spawn": (4, 18),
+        "spawn": (3, 18),
         "rotations": [
 
             [(1, 0), (2, 0), (1, 1), (2, 1)],

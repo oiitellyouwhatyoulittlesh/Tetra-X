@@ -9,12 +9,12 @@ Purpose:
 
 """
 
-from utils.vector import Vector2
 from game.pieces import (
     get_cells,
     get_colour,
-    get_spawn
+    get_spawn,
 )
+from utils.vector import Vector2
 
 
 class Piece:

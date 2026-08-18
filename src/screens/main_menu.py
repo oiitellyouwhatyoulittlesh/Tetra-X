@@ -2,10 +2,10 @@
 Tetra-X
 
 File:
-    main_menu.py
+main_menu.py
 
 Purpose:
-    Displays and handles the main menu.
+Displays and handles the main menu.
 """
 
 import pygame
@@ -38,6 +38,15 @@ class MainMenu(Screen):
 
         self.selected = 0
 
+        # ====================
+        # Navigation
+        # ====================
+
+        self.navigation_timer = 0.0
+        self.navigation_direction = 0
+
+        self.navigation_initial_delay = 0.30
+        self.navigation_repeat_delay = 0.08
 
     # ====================
     # Input
@@ -50,28 +59,63 @@ class MainMenu(Screen):
 
         for event in events:
 
-            if event.type != pygame.KEYDOWN:
-                continue
+            if event.type == pygame.KEYDOWN:
 
+                # ====================
+                # Menu Up
+                # ====================
 
-            if event.key == self.settings.controls.menu_up:
+                if event.key == self.settings.controls.menu_up:
 
-                self.selected = (
-                    self.selected - 1
-                ) % len(self.options)
+                    self.selected = (
+                        self.selected - 1
+                    ) % len(self.options)
 
+                    self.navigation_direction = -1
+                    self.navigation_timer = (
+                        -self.navigation_initial_delay
+                    )
 
-            elif event.key == self.settings.controls.menu_down:
+                # ====================
+                # Menu Down
+                # ====================
 
-                self.selected = (
-                    self.selected + 1
-                ) % len(self.options)
+                elif event.key == self.settings.controls.menu_down:
 
+                    self.selected = (
+                        self.selected + 1
+                    ) % len(self.options)
 
-            elif event.key == self.settings.controls.menu_confirm:
+                    self.navigation_direction = 1
+                    self.navigation_timer = (
+                        -self.navigation_initial_delay
+                    )
 
-                self.select()
+                # ====================
+                # Menu Confirm
+                # ====================
 
+                elif event.key == self.settings.controls.menu_confirm:
+
+                    self.select()
+
+            elif event.type == pygame.KEYUP:
+
+                # ====================
+                # Stop Navigation
+                # ====================
+
+                stop_conditions = {
+                    self.settings.controls.menu_up: -1,
+                    self.settings.controls.menu_down: 1,
+                }
+
+                if stop_conditions.get(event.key) == self.navigation_direction:
+                    self.navigation_direction = 0
+
+    # ====================
+    # Selection
+    # ====================
 
     def select(self) -> None:
         """
@@ -81,7 +125,6 @@ class MainMenu(Screen):
         option = self.options[
             self.selected
         ]
-
 
         if option == "PLAY":
 
@@ -94,7 +137,6 @@ class MainMenu(Screen):
                 )
             )
 
-
         elif option == "SETTINGS":
 
             from screens.settings_menu import SettingsMenu
@@ -106,7 +148,6 @@ class MainMenu(Screen):
                 )
             )
 
-
         elif option == "QUIT":
 
             pygame.event.post(
@@ -114,7 +155,6 @@ class MainMenu(Screen):
                     pygame.QUIT
                 )
             )
-
 
     # ====================
     # Update
@@ -124,9 +164,33 @@ class MainMenu(Screen):
         self,
         delta_time: float
     ) -> None:
+        """
+        Handles held menu navigation.
+        """
 
-        pass
+        if self.navigation_direction == 0:
 
+            return
+
+        self.navigation_timer += delta_time
+
+        if self.navigation_timer < 0:
+
+            return
+
+        while (
+            self.navigation_timer
+            >= self.navigation_repeat_delay
+        ):
+
+            self.navigation_timer -= (
+                self.navigation_repeat_delay
+            )
+
+            self.selected = (
+                self.selected
+                + self.navigation_direction
+            ) % len(self.options)
 
     # ====================
     # Drawing

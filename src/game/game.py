@@ -10,26 +10,32 @@ Purpose:
 """
 
 from dataclasses import dataclass
+
 import pygame
 
 from constants import (
     FPS,
-    LOCK_DELAY
+    LOCK_DELAY,
 )
-
 from game.board import Board
-
-from input.controls import Controls
-from input.handling import InputHandler
-
-from settings import Settings
 from game.modes import GameMode
 from game.scoring import (
+    get_all_clear_score,
+    get_hard_drop_score,
     get_line_clear_score,
+    get_soft_drop_score,
     get_t_spin_score,
-    get_perfect_clear_score,
-    is_difficult_clear
+    is_difficult_clear,
 )
+from input.controls import Controls
+from input.handling import InputHandler
+from save.records import (
+    get_blitz_record,
+    get_forty_lines_record,
+    update_blitz_record,
+    update_forty_lines_record,
+)
+from settings import Settings
 
 
 @dataclass
@@ -42,7 +48,7 @@ class ClearEvent:
     spin_type: str | None = None
     spin_piece: str | None = None
     combo: int = -1
-    perfect_clear: bool = False
+    all_clear: bool = False
     timer: float = 0.0
 
 
@@ -71,6 +77,7 @@ class Game:
 
     BLITZ_TIME = 120.0
     CLEAR_EVENT_TIME = 2.0
+    ZEN_TOP_OUT_TIME = 1.0
 
 
     def __init__(
@@ -113,6 +120,9 @@ class Game:
 
         self.completed = False
         self.completion_time = 0.0
+        self.results = {}
+        self.new_record = False
+        self.record_difference = 0
 
 
         # ====================
@@ -153,6 +163,8 @@ class Game:
         self.soft_drop_timer = 0.0
         self.prevent_hard_drop_timer = 0.0
 
+        self.zen_topout_timer = 0.0
+
         self.last_action_was_rotation = False
 
 
@@ -192,6 +204,9 @@ class Game:
 
         self.completed = False
         self.completion_time = 0.0
+        self.results = {}
+        self.new_record = False
+        self.record_difference = 0
 
 
         # ====================
@@ -227,6 +242,8 @@ class Game:
         self.soft_drop_timer = 0.0
         self.prevent_hard_drop_timer = 0.0
 
+        self.zen_topout_timer = 0.0
+
 
     def restart(self) -> None:
         """
@@ -258,6 +275,23 @@ class Game:
         """
 
         if not self.running:
+            return
+
+        
+        # ====================
+        # Zen Top Out Freeze
+        # ====================
+
+        if self.zen_topout_timer > 0:
+
+            self.zen_topout_timer -= delta_time
+
+            if self.zen_topout_timer <= 0:
+
+                self.zen_topout_timer = 0.0
+
+                self.start()
+
             return
         
 
@@ -329,7 +363,7 @@ class Game:
                 self.clear_event.spin_type = None
                 self.clear_event.spin_piece = None
                 self.clear_event.combo = -1
-                self.clear_event.perfect_clear = False
+                self.clear_event.all_clear = False
 
 
         # ====================
@@ -343,7 +377,10 @@ class Game:
             if self.blitz_time <= 0:
 
                 self.blitz_time = 0.0
+
                 self.game_over = True
+
+                self.save_results()
 
                 return
 
@@ -684,17 +721,18 @@ class Game:
 
 
     def reset_lock_timer_if_grounded(self) -> None:
-        """
-        Resets lock delay if the piece is touching the ground.
-        """
+            """
+            Resets lock delay if the piece is touching the ground.
+            """
 
-        if not self.board.collision.can_move(
-            self.board.current_piece,
-            0,
-            1
-        ):
-
-            if self.lock_resets < 15:
+            if (
+                not self.board.collision.can_move(
+                    self.board.current_piece,
+                    0,
+                    1
+                )
+                and self.lock_resets < 15
+            ):
 
                 self.lock_timer = 0.0
                 self.lock_resets += 1
@@ -717,24 +755,32 @@ class Game:
 
         if sdf == float("inf"):
 
-            moved = False
-
+            moved_cells = 0
 
             while self.board.move_piece(
                 0,
                 1
             ):
 
-                moved = True
+                moved_cells += 1
 
 
-            if moved:
+            if moved_cells > 0:
 
                 self.last_action_was_rotation = False
                 self.lock_timer = 0.0
 
 
-            return moved
+                if self.mode == GameMode.BLITZ:
+
+                    self.score += (
+                        get_soft_drop_score(
+                            moved_cells
+                        )
+                    )
+
+
+            return moved_cells > 0
 
 
         # ====================
@@ -754,13 +800,11 @@ class Game:
         )
 
 
-        moved = False
-
+        moved_cells = 0
 
         while self.soft_drop_timer >= interval:
 
             self.soft_drop_timer -= interval
-
 
             if not self.board.move_piece(
                 0,
@@ -769,30 +813,54 @@ class Game:
 
                 break
 
+            moved_cells += 1
 
-            moved = True
 
-
-        if moved:
+        if moved_cells > 0:
 
             self.last_action_was_rotation = False
             self.lock_timer = 0.0
 
 
-        return moved
+            if self.mode == GameMode.BLITZ:
+
+                self.score += (
+                    get_soft_drop_score(
+                        moved_cells
+                    )
+                )
+
+
+        return moved_cells > 0
 
 
     def hard_drop(self) -> None:
         """
-        Drops the piece instantly.
+        Drops the piece instantly and awards
+        score based on the drop distance.
         """
+
+        dropped_cells = 0
+
 
         while self.board.move_piece(
             0,
             1
         ):
 
-            pass
+            dropped_cells += 1
+
+
+        if (
+            dropped_cells > 0
+            and self.mode == GameMode.BLITZ
+        ):
+
+            self.score += (
+                get_hard_drop_score(
+                    dropped_cells
+                )
+            )
 
 
         self.lock_piece()
@@ -803,45 +871,47 @@ class Game:
     # ====================
 
     def update_clear_chain(
-            self,
-            cleared: int,
-            spin_type: str | None,
-            perfect_clear: bool
-        ) -> None:
-            """
-            Updates combo and Back-to-Back state.
-            """
+        self,
+        cleared: int,
+        spin_type: str | None,
+        all_clear: bool
+    ) -> None:
+        """
+        Updates combo and Back-to-Back state.
+        """
 
-            if cleared == 0:
-                self.combo = -1
-            else:
-                self.combo += 1
+        if cleared == 0:
+            self.combo = -1
 
-            difficult_clear = is_difficult_clear(
-                cleared,
-                spin_type,
-                perfect_clear
-            )
+        else:
+            self.combo += 1
 
-            # ====================
-            # Perfect Clear / Difficult Clear
-            # ====================
 
-            if perfect_clear:
-                self.back_to_back += 2
+        difficult_clear = is_difficult_clear(
+            cleared,
+            spin_type,
+            all_clear
+        )
 
-            elif difficult_clear:
-                self.back_to_back += 1
 
-            elif cleared > 0:
-                self.back_to_back = 0
+        # ====================
+        # Back-to-Back
+        # ====================
+
+        if difficult_clear:
+
+            self.back_to_back += 1
+
+        elif cleared > 0:
+
+            self.back_to_back = 0
 
 
     def add_line_clear_score(
         self,
         cleared: int,
         spin_type: str | None = None,
-        perfect_clear: bool = False
+        all_clear: bool = False
     ) -> None:
         """
         Adds score for a line clear.
@@ -880,12 +950,12 @@ class Game:
 
 
         # ====================
-        # Perfect Clear
+        # All Clear
         # ====================
 
-        if perfect_clear:
+        if all_clear:
 
-            score += get_perfect_clear_score(
+            score += get_all_clear_score(
                 self.level
             )
 
@@ -960,12 +1030,12 @@ class Game:
 
 
         # ====================
-        # Perfect Clear
+        # All Clear
         # ====================
 
-        perfect_clear = (
+        all_clear = (
             cleared > 0
-            and self.board.is_perfect_clear()
+            and self.board.is_all_clear()
         )
 
 
@@ -976,7 +1046,7 @@ class Game:
         self.update_clear_chain(
             cleared,
             spin_type,
-            perfect_clear
+            all_clear
         )
 
 
@@ -989,7 +1059,7 @@ class Game:
             self.add_line_clear_score(
                 cleared,
                 spin_type,
-                perfect_clear
+                all_clear
             )
 
 
@@ -999,7 +1069,8 @@ class Game:
 
         if (
             cleared > 0
-            or perfect_clear
+            or all_clear
+            or spin_type is not None
         ):
 
             self.clear_event = ClearEvent(
@@ -1012,7 +1083,7 @@ class Game:
                     "T-SPIN"
                     if t_spin
                     else (
-                        "MINI SPIN"
+                        f"MINI {spin_piece}-SPIN"
                         if mini_spin
                         else None
                     )
@@ -1020,9 +1091,13 @@ class Game:
 
                 spin_piece=spin_piece,
 
-                combo=self.combo,
+                combo=(
+                    self.combo
+                    if cleared > 0
+                    else -1
+                ),
 
-                perfect_clear=perfect_clear,
+                all_clear=all_clear,
 
                 timer=self.CLEAR_EVENT_TIME
             )
@@ -1040,16 +1115,19 @@ class Game:
         # 40 Lines Check
         # ====================
 
-        if self.mode == GameMode.FORTY_LINES:
+        if self.mode == GameMode.FORTY_LINES and self.lines_cleared >= 40:
 
-            if self.lines_cleared >= 40:
+            self.lines_cleared = 40
 
-                self.lines_cleared = 40
-                self.completion_time = self.game_time
-                self.completed = True
-                self.game_over = True
+            self.completion_time = self.game_time
 
-                return
+            self.completed = True
+
+            self.game_over = True
+
+            self.save_results()
+
+            return
 
 
         # ====================
@@ -1084,7 +1162,13 @@ class Game:
 
         if not self.board.spawn_piece():
 
-            self.game_over = True
+            if self.mode == GameMode.ZEN:
+
+                self.zen_topout_timer = self.ZEN_TOP_OUT_TIME
+
+            else:
+
+                self.game_over = True
 
 
         self.input.reset_handling()
@@ -1092,6 +1176,112 @@ class Game:
         self.soft_drop_timer = 0.0
 
         self.last_action_was_rotation = False
+
+
+    # ====================
+    # Results
+    # ====================
+
+    def create_results(self) -> dict:
+        """
+        Creates a dictionary containing the statistics
+        from the current run.
+        """
+
+        pieces = self.pieces_placed
+
+        inputs_per_piece = (
+            self.inputs / pieces
+            if pieces > 0
+            else 0.0
+        )
+
+        display_time = (
+            self.completion_time
+            if self.mode == GameMode.FORTY_LINES and self.completed
+            else self.game_time
+        )
+
+        pieces_per_second = (
+            pieces / display_time
+            if display_time > 0
+            else 0.0
+        )
+
+        return {
+            "score": self.score,
+            "lines": self.lines_cleared,
+            "pieces": pieces,
+            "pps": pieces_per_second,
+            "inputs": self.inputs,
+            "inputs_per_piece": inputs_per_piece,
+            "time": display_time,
+            "level": self.level
+        }
+
+
+    def save_results(self) -> None:
+        """
+        Compares the current run against the personal best
+        and saves a new record if appropriate.
+        """
+
+        self.results = self.create_results()
+
+        self.new_record = False
+        self.record_difference = 0
+
+
+        # ====================
+        # Blitz
+        # ====================
+
+        if self.mode == GameMode.BLITZ:
+
+            record = get_blitz_record()
+
+            old_score = record["score"]
+
+            self.record_difference = (
+                self.results["score"]
+                - old_score
+            )
+
+            self.new_record = update_blitz_record(
+                self.results
+            )
+
+
+        # ====================
+        # 40 Lines
+        # ====================
+
+        elif self.mode == GameMode.FORTY_LINES:
+
+            record = get_forty_lines_record()
+
+            old_time = record["time"]
+
+
+            # ====================
+            # First Record
+            # ====================
+
+            if old_time is None:
+
+                self.record_difference = 0
+
+            else:
+
+                self.record_difference = (
+                    self.results["time"]
+                    - old_time
+                )
+
+
+            self.new_record = update_forty_lines_record(
+                self.results
+            )
 
 
     # ====================

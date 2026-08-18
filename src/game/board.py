@@ -9,14 +9,10 @@ Purpose:
 
 """
 
-from constants import (
-    BOARD_COLUMNS,
-    BOARD_ROWS
-)
-
-from game.queue import Queue
-from game.piece import Piece
+from constants import BOARD_COLUMNS, BOARD_ROWS
 from game.collision import Collision
+from game.piece import Piece
+from game.queue import Queue
 from game.rotation import Rotation
 
 
@@ -72,7 +68,7 @@ class Board:
         ]
 
 
-    def is_perfect_clear(self) -> bool:
+    def is_all_clear(self) -> bool:
         """
         Returns True if the board is completely empty.
         """
@@ -100,14 +96,9 @@ class Board:
         )
 
 
-        if not self.collision.valid_position(
+        return self.collision.valid_position(
             self.current_piece
-        ):
-
-            return False
-
-
-        return True
+        )
 
 
     def hold(self) -> bool:
