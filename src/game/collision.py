@@ -6,7 +6,6 @@ File:
 
 Purpose:
     Handles collision checks for the board.
-
 """
 
 from constants import (
@@ -21,38 +20,25 @@ class Collision:
     """
 
     def __init__(self, board) -> None:
-
         self.board = board
+
 
     # ====================
     # Cell Checks
     # ====================
 
-    def inside_board(
-        self,
-        x: int,
-        y: int
-    ) -> bool:
+    def inside_board(self, x: int, y: int) -> bool:
         """
-        Returns True if a position is inside the board.
+        Returns True if a position is inside the playfield boundaries.
         """
-
-        return (
-            0 <= x < BOARD_COLUMNS and
-            y < BOARD_ROWS
-        )
+        return 0 <= x < BOARD_COLUMNS and y < BOARD_ROWS
 
 
-    def cell_empty(
-        self,
-        x: int,
-        y: int
-    ) -> bool:
+    def cell_empty(self, x: int, y: int) -> bool:
         """
-        Returns True if a cell is empty.
+        Returns True if a cell on the board is currently empty.
         """
-
-        # Cells above the visible board are allowed
+        # Cells above the visible board are allowed during spawn/movement
         if y < 0:
             return True
 
@@ -63,86 +49,49 @@ class Collision:
     # Piece Checks
     # ====================
 
-    def valid_position(
-        self,
-        piece
-    ) -> bool:
+    def valid_position(self, piece) -> bool:
         """
-        Returns True if a piece can exist at its position.
+        Returns True if all cells of a piece can validly exist at its current position.
         """
-
         for x, y in piece.get_cells():
-
-            if not self.inside_board(
-                x,
-                y
-            ):
+            if not self.inside_board(x, y):
                 return False
 
-            if not self.cell_empty(
-                x,
-                y
-            ):
+            if not self.cell_empty(x, y):
                 return False
 
         return True
 
 
-    def can_move(
-        self,
-        piece,
-        dx: int,
-        dy: int
-    ) -> bool:
+    def can_move(self, piece, dx: int, dy: int) -> bool:
         """
-        Returns True if a piece can move.
+        Returns True if a piece can move by the specified delta offset.
         """
-
         test_piece = piece.copy()
+        test_piece.move(dx, dy)
 
-        test_piece.move(
-            dx,
-            dy
-        )
-
-        return self.valid_position(
-            test_piece
-        )
+        return self.valid_position(test_piece)
 
 
-    def is_immobile(
-        self,
-        piece
-    ) -> bool:
+    def is_immobile(self, piece) -> bool:
         """
         Returns True if the piece cannot move upward.
 
-        This is the simplified immobile check used
-        for All-Mini+ spin detection.
+        This is the simplified immobile check used for spin detection.
         """
-
-        return not self.can_move(
-            piece,
-            0,
-            -1
-        )
+        return not self.can_move(piece, 0, -1)
 
 
     # ====================
-    # T-Spin
+    # Special Mechanics (T-Spin)
     # ====================
 
-    def count_t_spin_corners(
-        self,
-        piece
-    ) -> int:
+    def count_t_spin_corners(self, piece) -> int:
         """
-        Counts occupied or out-of-bounds corners
-        around a T piece.
+        Counts occupied or out-of-bounds corners around a T-Piece center.
 
         Returns a value from 0 to 4.
         """
-
         if piece.type != "T":
             return 0
 
@@ -156,12 +105,7 @@ class Collision:
         occupied = 0
 
         for x, y in corners:
-
-            if (
-                x < 0
-                or x >= BOARD_COLUMNS
-                or y >= BOARD_ROWS
-            ):
+            if x < 0 or x >= BOARD_COLUMNS or y >= BOARD_ROWS:
                 occupied += 1
                 continue
 

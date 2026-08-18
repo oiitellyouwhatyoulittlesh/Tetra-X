@@ -5,21 +5,15 @@ File:
     settings.py
 
 Purpose:
-    Loads and stores the game's settings.
+    Loads, manages, and stores all user settings and control key mappings.
 """
 
 from dataclasses import dataclass
 
 import pygame
 
-from constants import (
-    DEFAULT_SETTINGS,
-    SETTINGS_FILE,
-)
-from save.json_manager import (
-    load_json,
-    save_json,
-)
+from constants import DEFAULT_SETTINGS, SETTINGS_FILE
+from save.json_manager import load_json, save_json
 
 # ====================
 # Key Map
@@ -120,14 +114,8 @@ KEY_MAP = {
     "z": pygame.K_z
 }
 
-
-# Reverse lookup:
-# pygame key -> settings.json name
-
-REVERSE_KEY_MAP = {
-    key: name
-    for name, key in KEY_MAP.items()
-}
+# Reverse lookup: Pygame key integer -> JSON key string
+REVERSE_KEY_MAP = {key: name for name, key in KEY_MAP.items()}
 
 
 # ====================
@@ -136,21 +124,21 @@ REVERSE_KEY_MAP = {
 
 @dataclass
 class Controls:
-    move_left: int
-    move_right: int
-    soft_drop: int
-    hard_drop: int
-    rotate_cw: int
-    rotate_ccw: int
-    rotate_180: int
-    hold: int
-    pause: int
-    restart: int
+    move_left: int | None
+    move_right: int | None
+    soft_drop: int | None
+    hard_drop: int | None
+    rotate_cw: int | None
+    rotate_ccw: int | None
+    rotate_180: int | None
+    hold: int | None
+    pause: int | None
+    restart: int | None
 
-    menu_up: int
-    menu_down: int
-    menu_confirm: int
-    menu_back: int
+    menu_up: int | None
+    menu_down: int | None
+    menu_confirm: int | None
+    menu_back: int | None
 
 
 @dataclass
@@ -172,44 +160,26 @@ class Video:
 
 class Settings:
     """
-    Stores all game settings.
+    Stores and manages all active game configurations.
     """
 
     def __init__(self) -> None:
+        data = load_json(SETTINGS_FILE, DEFAULT_SETTINGS)
 
-        data = load_json(
-            SETTINGS_FILE,
-            DEFAULT_SETTINGS
-        )
-
-        self.controls = self._load_controls(
-            data["controls"]
-        )
-
-        self.handling = self._load_handling(
-            data["handling"]
-        )
-
-        self.video = Video(
-            fullscreen=data["video"].get(
-                "fullscreen",
-                True
-            )
-        )
+        self.controls = self._load_controls(data["controls"])
+        self.handling = self._load_handling(data["handling"])
+        self.video = Video(fullscreen=data["video"].get("fullscreen", True))
+        self.display_controls = data.get("display_controls", True)
 
 
     # ====================
-    # Loading
+    # Loading Utilities
     # ====================
 
-    def _load_controls(
-        self,
-        data: dict
-    ) -> Controls:
+    def _load_controls(self, data: dict) -> Controls:
         """
-        Loads the control settings.
+        Parses control settings dictionary into a Controls instance.
         """
-
         return Controls(
             move_left=KEY_MAP[data["move_left"]],
             move_right=KEY_MAP[data["move_right"]],
@@ -229,95 +199,41 @@ class Settings:
         )
 
 
-    def _load_handling(
-        self,
-        data: dict
-    ) -> Handling:
+    def _load_handling(self, data: dict) -> Handling:
         """
-        Loads the handling settings.
+        Parses handling settings dictionary into a Handling instance.
         """
-
         sdf = data["sdf"]
-
         if sdf == "inf":
-
             sdf = float("inf")
 
-
         return Handling(
-            das=max(
-                1.0,
-                min(
-                    20.0,
-                    float(data["das"])
-                )
-            ),
-
-            arr=max(
-                0.0,
-                min(
-                    5.0,
-                    float(data["arr"])
-                )
-            ),
-
-            dcd=max(
-                0.0,
-                min(
-                    20.0,
-                    float(data["dcd"])
-                )
-            ),
-
+            das=max(1.0, min(20.0, float(data["das"]))),
+            arr=max(0.0, min(5.0, float(data["arr"]))),
+            dcd=max(0.0, min(20.0, float(data["dcd"]))),
             sdf=sdf,
-
-            prevent_hard_drop=data.get(
-                "prevent_hard_drop",
-                False
-            ),
-
-            cancel_das=data.get(
-                "cancel_das",
-                True
-            ),
-
-            prefer_soft_drop=data.get(
-                "prefer_soft_drop",
-                False
-            )
+            prevent_hard_drop=data.get("prevent_hard_drop", False),
+            cancel_das=data.get("cancel_das", True),
+            prefer_soft_drop=data.get("prefer_soft_drop", False)
         )
 
 
     # ====================
-    # Control Settings
+    # Control Management
     # ====================
 
-    def get_control(
-        self,
-        action: str
-    ) -> int | None:
+    def get_control(self, action: str) -> int | None:
         """
-        Returns the pygame key bound to an action.
+        Returns the Pygame key constant bound to the specified action string.
         """
-
-        return getattr(
-            self.controls,
-            action,
-            None
-        )
+        return getattr(self.controls, action, None)
 
 
-    def get_control_name(
-        self,
-        action: str
-    ) -> str:
+    def get_control_name(self, action: str) -> str:
         """
-        Returns the readable key name for an action.
+        Returns a readable key display name for a specific control action.
         """
-
-        key = self.get_control(
-            action
-        )
+        key = self.get_control(action)
 
         if key is None:
             return "UNKNOWN"
@@ -328,77 +244,41 @@ class Settings:
         return pygame.key.name(key).upper()
 
 
-    def set_control(
-        self,
-        action: str,
-        key: int
-    ) -> bool:
+    def set_control(self, action: str, key: int | None) -> bool:
         """
-        Changes the key bound to an action.
-
-        Returns True if the action exists.
+        Binds a Pygame key integer to a given control action.
         """
-
-        if not hasattr(
-            self.controls,
-            action
-        ):
+        if not hasattr(self.controls, action):
             return False
 
-
-        setattr(
-            self.controls,
-            action,
-            key
-        )
-
-
+        setattr(self.controls, action, key)
         return True
 
 
     # ====================
-    # Reset
+    # Reset & Save
     # ====================
 
     def reset(self) -> None:
         """
-        Restores all settings to their default values
-        and saves them to the settings file.
+        Restores default configuration values and updates saved file.
         """
-
         data = DEFAULT_SETTINGS
 
-
-        self.controls = self._load_controls(
-            data["controls"]
-        )
-
-        self.handling = self._load_handling(
-            data["handling"]
-        )
-
-        self.video = Video(
-            fullscreen=data["video"].get(
-                "fullscreen",
-                True
-            )
-        )
+        self.controls = self._load_controls(data["controls"])
+        self.handling = self._load_handling(data["handling"])
+        self.video = Video(fullscreen=data["video"].get("fullscreen", True))
+        self.display_controls = data.get("display_controls", True)
 
         self.save()
 
 
-    # ====================
-    # Saving
-    # ====================
-
     def save(self) -> None:
         """
-        Saves the current settings to JSON.
+        Serializes current settings state to JSON file.
         """
-
         controls = {}
-
-        for action in (
+        action_keys = (
             "move_left",
             "move_right",
             "soft_drop",
@@ -413,23 +293,17 @@ class Settings:
             "menu_down",
             "menu_confirm",
             "menu_back"
-        ):
+        )
 
-            key = self.get_control(
-                action
-            )
-
+        for action in action_keys:
+            key = self.get_control(action)
             if key is None:
                 continue
 
             if key in REVERSE_KEY_MAP:
-
                 controls[action] = REVERSE_KEY_MAP[key]
-
             else:
-
                 controls[action] = pygame.key.name(key).upper()
-
 
         handling = {
             "das": self.handling.das,
@@ -440,32 +314,20 @@ class Settings:
                 if self.handling.sdf == float("inf")
                 else self.handling.sdf
             ),
-
-            "prevent_hard_drop":
-                self.handling.prevent_hard_drop,
-
-            "cancel_das":
-                self.handling.cancel_das,
-
-            "prefer_soft_drop":
-                self.handling.prefer_soft_drop
+            "prevent_hard_drop": self.handling.prevent_hard_drop,
+            "cancel_das": self.handling.cancel_das,
+            "prefer_soft_drop": self.handling.prefer_soft_drop
         }
-
 
         video = {
-            "fullscreen":
-                self.video.fullscreen
+            "fullscreen": self.video.fullscreen
         }
-
 
         data = {
             "video": video,
             "controls": controls,
-            "handling": handling
+            "handling": handling,
+            "display_controls": self.display_controls
         }
 
-
-        save_json(
-            SETTINGS_FILE,
-            data
-        )
+        save_json(SETTINGS_FILE, data)

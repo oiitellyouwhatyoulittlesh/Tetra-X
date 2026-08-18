@@ -20,55 +20,36 @@ class Screen:
     Base class for all Tetra-X screens.
     """
 
-    def __init__(
-        self,
-        settings: "Settings"
-    ) -> None:
-
+    def __init__(self, settings: "Settings") -> None:
         self.settings = settings
 
 
-    def handle_events(
-        self,
-        events
-    ) -> None:
+    def handle_events(self, events) -> None:
         """
         Handles input events.
         """
 
 
-    def update(
-        self,
-        delta_time: float
-    ) -> None:
+    def update(self, delta_time: float) -> None:
         """
-        Updates the screen.
+        Updates the screen state.
         """
 
 
-    def draw(
-        self,
-        renderer: "Renderer"
-    ) -> None:
+    def draw(self, renderer: "Renderer") -> None:
         """
-        Draws the screen.
+        Draws the screen components.
         """
 
 
 class ScreenManager:
     """
-    Controls the currently active screen.
+    Controls and manages the active screen lifecycle.
     """
 
-    def __init__(
-        self,
-        renderer: "Renderer",
-        settings: "Settings"
-    ) -> None:
-
+    def __init__(self, renderer: "Renderer", settings: "Settings") -> None:
         self.renderer = renderer
         self.settings = settings
-
         self.current_screen: Screen | None = None
 
 
@@ -76,65 +57,46 @@ class ScreenManager:
     # Screen Control
     # ====================
 
-    def set_screen(
-        self,
-        screen: Screen
-    ) -> None:
+    def set_screen(self, screen: Screen) -> None:
         """
         Changes the active screen.
         """
-
         self.current_screen = screen
 
 
     # ====================
-    # Update
+    # Event & State Processing
     # ====================
 
-    def handle_events(
-        self,
-        events
-    ) -> None:
+    def handle_events(self, events) -> None:
         """
-        Passes events to the active screen.
+        Passes input events to the active screen.
         """
-
         if self.current_screen is None:
             return
 
-        self.current_screen.handle_events(
-            events
-        )
+        self.current_screen.handle_events(events)
 
 
-    def update(
-        self,
-        delta_time: float
-    ) -> None:
+    def update(self, delta_time: float) -> None:
         """
-        Updates the active screen.
+        Updates the active screen state.
         """
-
         if self.current_screen is None:
             return
 
-        self.current_screen.update(
-            delta_time
-        )
+        self.current_screen.update(delta_time)
 
 
     # ====================
-    # Drawing
+    # Rendering
     # ====================
 
     def draw(self) -> None:
         """
-        Draws the active screen.
+        Draws the active screen using the assigned renderer.
         """
-
         if self.current_screen is None:
             return
 
-        self.current_screen.draw(
-            self.renderer
-        )
+        self.current_screen.draw(self.renderer)

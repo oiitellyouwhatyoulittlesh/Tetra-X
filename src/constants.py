@@ -6,7 +6,6 @@ File:
 
 Purpose:
     Stores constant values used throughout the game.
-
 """
 
 # ====================
@@ -17,11 +16,10 @@ TITLE = "Tetra-X"
 VERSION = "1.0.0"
 
 FPS = 60
-
 MS_PER_FRAME = 1000.0 / FPS
 
 # ====================
-# Screen
+# Screen & Grid
 # ====================
 
 CELL_SIZE = 32
@@ -56,6 +54,7 @@ PIECE_L = (255, 140, 0)
 
 BACKGROUND = (20, 20, 20)
 GRID = (45, 45, 45)
+BORDER = (255, 255, 255)
 TEXT = (255, 255, 255)
 SHADOW = (0, 0, 0)
 GARBAGE_GREY = (100, 100, 100)
@@ -81,34 +80,29 @@ DEFAULT_SETTINGS = {
     "video": {
         "fullscreen": True
     },
-
     "controls": {
         "move_left": "LEFT",
         "move_right": "RIGHT",
         "soft_drop": "DOWN",
         "hard_drop": "SPACE",
-
         "rotate_cw": "UP",
         "rotate_ccw": "z",
         "rotate_180": "x",
-
         "hold": "c",
-
         "pause": "ESCAPE",
         "restart": "r",
-
         "menu_up": "UP",
         "menu_down": "DOWN",
         "menu_confirm": "RETURN",
         "menu_back": "ESCAPE"
     },
-
     "handling": {
         "das": 10.0,
         "arr": 2.0,
         "dcd": 1.0,
         "sdf": 6
-    }
+    },
+    "display_controls": True
 }
 
 # ====================
@@ -126,7 +120,6 @@ DEFAULT_RECORDS = {
         "time": 0.0,
         "level": 1
     },
-
     "forty_lines": {
         "time": None,
         "lines": 0,

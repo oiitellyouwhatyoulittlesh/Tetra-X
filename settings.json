@@ -26,5 +26,6 @@
         "prevent_hard_drop": false,
         "cancel_das": true,
         "prefer_soft_drop": false
-    }
+    },
+    "display_controls": true
 }

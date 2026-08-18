@@ -33,7 +33,6 @@ T_SPIN_SCORES = {
         3: 800,
         4: 1600
     },
-
     "normal": {
         0: 400,
         1: 800,
@@ -45,122 +44,71 @@ T_SPIN_SCORES = {
 
 
 # ====================
-# All Clear
+# Special Mechanics Scores
 # ====================
 
 ALL_CLEAR_SCORE = 3500
-
-
-# ====================
-# Drop Scores
-# ====================
-
 HARD_DROP_SCORE = 2
 SOFT_DROP_SCORE = 1
 
 
 # ====================
-# Line Clear
+# Line Clear Score Calculation
 # ====================
 
-def get_line_clear_score(
-    cleared: int,
-    level: int
-) -> int:
+def get_line_clear_score(cleared: int, level: int) -> int:
     """
-    Returns the score awarded for clearing lines.
+    Returns the score awarded for clearing lines based on current level.
     """
-
-    base_score = LINE_CLEAR_SCORES.get(
-        cleared,
-        0
-    )
-
+    base_score = LINE_CLEAR_SCORES.get(cleared, 0)
     return base_score * level
 
 
 # ====================
-# T-Spin
+# T-Spin Score Calculation
 # ====================
 
-def get_t_spin_score(
-    cleared: int,
-    level: int,
-    mini: bool = False
-) -> int:
+def get_t_spin_score(cleared: int, level: int, mini: bool = False) -> int:
     """
-    Returns the score awarded for a T-spin or Mini Spin.
+    Returns the score awarded for a T-Spin or Mini Spin.
     """
+    spin_type = "mini" if mini else "normal"
+    scores = T_SPIN_SCORES.get(spin_type, {})
 
-    spin_type = (
-        "mini"
-        if mini
-        else "normal"
-    )
-
-    scores = T_SPIN_SCORES.get(
-        spin_type,
-        {}
-    )
-
-    return (
-        scores.get(
-            cleared,
-            0
-        )
-        * level
-    )
+    return scores.get(cleared, 0) * level
 
 
 # ====================
-# All Clear
+# All Clear Score Calculation
 # ====================
 
-def get_all_clear_score(
-    level: int
-) -> int:
+def get_all_clear_score(level: int) -> int:
     """
-    Returns the score awarded for
-    an All Clear.
+    Returns the score awarded for an All Clear board state.
     """
-
     return ALL_CLEAR_SCORE * level
 
 
 # ====================
-# Drop Score
+# Drop Score Calculations
 # ====================
 
-def get_hard_drop_score(
-    cells: int
-) -> int:
+def get_hard_drop_score(cells: int) -> int:
     """
-    Returns the score awarded for
-    hard dropping a piece.
+    Returns the score awarded for hard dropping a piece across distance.
     """
-
-    return (
-        cells
-        * HARD_DROP_SCORE
-    )
+    return cells * HARD_DROP_SCORE
 
 
-def get_soft_drop_score(
-    cells: int
-) -> int:
+def get_soft_drop_score(cells: int) -> int:
     """
-    Returns the score awarded for
-    soft dropping a piece.
+    Returns the score awarded for soft dropping a piece across distance.
     """
-
-    return (
-        cells
-        * SOFT_DROP_SCORE
-    )
+    return cells * SOFT_DROP_SCORE
 
 
 # ====================
-# Back-to-Back
+# Back-to-Back Logic & Bonus
 # ====================
 
 def is_difficult_clear(
@@ -169,9 +117,8 @@ def is_difficult_clear(
     all_clear: bool = False
 ) -> bool:
     """
-    Returns True if the clear qualifies for Back-to-Back.
+    Returns True if the line clear qualifies for a Back-to-Back streak.
     """
-
     if all_clear:
         return True
 
@@ -181,43 +128,22 @@ def is_difficult_clear(
     return cleared >= 4
 
 
-# ====================
-# Back-to-Back Bonus
-# ====================
-
-def apply_back_to_back(
-    score: int
-) -> int:
+def apply_back_to_back(score: int) -> int:
     """
-    Applies the Back-to-Back 1.5x bonus.
+    Applies the Back-to-Back 1.5x score multiplier.
     """
-
-    return int(
-        score * 1.5
-    )
+    return int(score * 1.5)
 
 
 # ====================
-# Combo Bonus
+# Combo Bonus Calculation
 # ====================
 
-def get_combo_score(
-    combo: int,
-    level: int
-) -> int:
+def get_combo_score(combo: int, level: int) -> int:
     """
-    Returns the combo bonus.
-
-    Combo 0 gives no bonus.
-    Combo 1 gives 50 points.
-    Combo 2 gives 100 points.
+    Returns the additional combo streak score bonus.
     """
-
     if combo <= 0:
         return 0
 
-    return (
-        combo
-        * 50
-        * level
-    )
+    return combo * 50 * level

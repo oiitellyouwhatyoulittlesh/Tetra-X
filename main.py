@@ -13,10 +13,7 @@ import sys
 
 sys.path.insert(
     0,
-    os.path.join(
-        os.path.dirname(__file__),
-        "src"
-    )
+    os.path.join(os.path.dirname(__file__), "src")
 )
 
 import pygame
@@ -30,60 +27,34 @@ from settings import Settings
 
 def main() -> None:
     """
-    Runs the game.
+    Initializes engine subsystems and manages the primary game loop.
     """
-
     settings = Settings()
-
     renderer = Renderer()
 
-    screen_manager = ScreenManager(
-        renderer,
-        settings
-    )
-
-    screen_manager.set_screen(
-        MainMenu(
-            screen_manager,
-            settings
-        )
-    )
+    screen_manager = ScreenManager(renderer, settings)
+    screen_manager.set_screen(MainMenu(screen_manager, settings))
 
     clock = pygame.time.Clock()
-
     running = True
 
     while running:
-
-        delta_time = (
-            clock.tick(FPS) / 1000
-        )
-
+        delta_time = clock.tick(FPS) / 1000.0
         events = pygame.event.get()
 
         for event in events:
-
             if event.type == pygame.QUIT:
-
                 running = False
 
-        screen_manager.handle_events(
-            events
-        )
-
-        screen_manager.update(
-            delta_time
-        )
+        screen_manager.handle_events(events)
+        screen_manager.update(delta_time)
 
         renderer.clear()
-
         screen_manager.draw()
-
         renderer.update()
 
     pygame.quit()
 
 
 if __name__ == "__main__":
-
     main()

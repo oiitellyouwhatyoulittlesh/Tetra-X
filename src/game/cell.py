@@ -6,7 +6,6 @@ File:
 
 Purpose:
     Represents one occupied cell on the board.
-
 """
 
 from utils.vector import Vector2
@@ -18,12 +17,12 @@ class Cell:
     """
 
     def __init__(self, x: int, y: int, colour: tuple[int, int, int]) -> None:
-
         self.position = Vector2(x, y)
         self.colour = colour
 
+
     # ====================
-    # Position
+    # Position Properties & Movement
     # ====================
 
     @property
@@ -36,38 +35,30 @@ class Cell:
 
     def set_position(self, x: int, y: int) -> None:
         """
-        Sets the cell position.
+        Sets the cell position directly.
         """
-
         self.position.set(x, y)
 
     def move(self, dx: int, dy: int) -> None:
         """
-        Moves the cell.
+        Moves the cell position by offsets.
         """
-
         self.position.move(dx, dy)
 
     def copy(self) -> "Cell":
         """
-        Returns a copy of this cell.
+        Returns a duplicate copy of this cell.
         """
-
         return Cell(
             self.x,
             self.y,
             self.colour
         )
 
+
     # ====================
-    # String
+    # Representation
     # ====================
 
     def __repr__(self) -> str:
-
-        return (
-            f"Cell("
-            f"x={self.x}, "
-            f"y={self.y}"
-            f")"
-        )
+        return f"Cell(x={self.x}, y={self.y})"

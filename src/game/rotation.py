@@ -11,7 +11,7 @@ Purpose:
 from game.collision import Collision
 
 # ====================
-# SRS Kick Data
+# Kick Data Tables
 # ====================
 
 NORMAL_KICKS = {
@@ -25,11 +25,6 @@ NORMAL_KICKS = {
     "0->3": [(0, 0), (1, 0), (1, -1), (0, 2), (1, 2)],
 }
 
-
-# ====================
-# I-Piece Kick Data
-# ====================
-
 I_KICKS = {
     "0->1": [(0, 0), (-2, 0), (1, 0), (-2, 1), (1, -2)],
     "1->0": [(0, 0), (2, 0), (-1, 0), (2, -1), (-1, 2)],
@@ -40,11 +35,6 @@ I_KICKS = {
     "3->0": [(0, 0), (1, 0), (-2, 0), (1, 2), (-2, -1)],
     "0->3": [(0, 0), (-1, 0), (2, 0), (-1, -2), (2, 1)],
 }
-
-
-# ====================
-# 180 Degree Kicks
-# ====================
 
 KICKS_180 = {
     "0->2": [(0, 0), (0, -1), (1, -1), (-1, -1), (1, 0), (-1, 0)],
@@ -63,12 +53,7 @@ class Rotation:
     Handles piece rotation and wall kicks.
     """
 
-    def __init__(
-        self,
-        collision: Collision,
-        board
-    ) -> None:
-
+    def __init__(self, collision: Collision, board) -> None:
         self.collision = collision
         self.board = board
 
@@ -77,70 +62,41 @@ class Rotation:
     # Rotation Actions
     # ====================
 
-    def rotate_cw(
-        self,
-        piece
-    ) -> bool:
+    def rotate_cw(self, piece) -> bool:
         """
         Attempts clockwise rotation.
         """
-
-        return self._rotate(
-            piece,
-            1
-        )
+        return self._rotate(piece, 1)
 
 
-    def rotate_ccw(
-        self,
-        piece
-    ) -> bool:
+    def rotate_ccw(self, piece) -> bool:
         """
         Attempts counter-clockwise rotation.
         """
-
-        return self._rotate(
-            piece,
-            -1
-        )
+        return self._rotate(piece, -1)
 
 
-    def rotate_180(
-        self,
-        piece
-    ) -> bool:
+    def rotate_180(self, piece) -> bool:
         """
         Attempts 180 degree rotation.
         """
-
-        return self._rotate(
-            piece,
-            2
-        )
+        return self._rotate(piece, 2)
 
 
     # ====================
     # Internal Logic
     # ====================
 
-    def _rotate(
-        self,
-        piece,
-        amount: int
-    ) -> bool:
+    def _rotate(self, piece, amount: int) -> bool:
         """
-        Attempts a rotation and applies wall kicks.
+        Attempts a rotation and applies wall kicks testing positions sequentially.
         """
-
-        # O-piece does not rotate or kick
+        # O Piece does not rotate or kick
         if piece.type == "O":
             return False
 
         old_rotation = piece.rotation
-
-        new_rotation = (
-            old_rotation + amount
-        ) % 4
+        new_rotation = (old_rotation + amount) % 4
 
         kick_data = self.get_kicks(
             piece,
@@ -152,29 +108,19 @@ class Rotation:
         if not kick_data:
             return False
 
-        # Apply rotation state
+        # Temporarily apply rotation state
         piece.rotation = new_rotation
 
-        # Test kicks
+        # Test kick offsets
         for dx, dy in kick_data:
+            piece.move(dx, dy)
 
-            piece.move(
-                dx,
-                dy
-            )
-
-            if self.collision.valid_position(
-                piece
-            ):
-
-                # Kick successful
+            if self.collision.valid_position(piece):
+                # Kick test succeeded
                 return True
 
-            # Undo position shift on failure
-            piece.move(
-                -dx,
-                -dy
-            )
+            # Revert offset on failure
+            piece.move(-dx, -dy)
 
         # All kicks failed, revert rotation state
         piece.rotation = old_rotation
@@ -194,31 +140,17 @@ class Rotation:
         amount: int
     ):
         """
-        Returns the appropriate kick table for the transition.
+        Returns the appropriate kick table sequence for the given transition.
         """
-
-        transition = (
-            f"{old_rotation}->{new_rotation}"
-        )
+        transition = f"{old_rotation}->{new_rotation}"
 
         # 180 Degree Rotations
         if abs(amount) == 2:
-
-            return KICKS_180.get(
-                transition,
-                []
-            )
+            return KICKS_180.get(transition, [])
 
         # I Piece
         if piece.type == "I":
+            return I_KICKS.get(transition, [])
 
-            return I_KICKS.get(
-                transition,
-                []
-            )
-
-        # J, L, S, T, Z Pieces
-        return NORMAL_KICKS.get(
-            transition,
-            []
-        )
+        # Standard J, L, S, T, Z Pieces
+        return NORMAL_KICKS.get(transition, [])
